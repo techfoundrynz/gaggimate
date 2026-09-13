@@ -1,10 +1,12 @@
 #include "DistanceSensor.h"
 
-DistanceSensor::DistanceSensor(SoftWire *wire, distance_callback_t callback) : i2c(wire), _callback(callback) {
+DistanceSensor::DistanceSensor(SoftWire *wire, distance_callback_t callback, std::recursive_mutex &busMutex)
+    : i2c(wire), busMutex(busMutex), _callback(callback) {
     this->tof = new VL53L0X(i2c);
 }
 
 void DistanceSensor::setup() {
+    std::lock_guard<std::recursive_mutex> guard(busMutex);
     this->tof->setAddress(0x7E);
     this->tof->setTimeout(1000);
     if (!this->tof->init()) {
@@ -17,10 +19,14 @@ void DistanceSensor::setup() {
 }
 
 void DistanceSensor::loop() {
-    int millis = tof->readRangeContinuousMillimeters();
-    if (tof->timeoutOccurred()) {
-        ESP_LOGE("DistanceSensor", "ToF Timeout");
-        return;
+    int millis;
+    {
+        std::lock_guard<std::recursive_mutex> guard(busMutex);
+        millis = tof->readRangeContinuousMillimeters();
+        if (tof->timeoutOccurred()) {
+            ESP_LOGE("DistanceSensor", "ToF Timeout");
+            return;
+        }
     }
     currentMillis = currentMillis == 0 ? millis : static_cast<int>(currentMillis * 0.9 + static_cast<double>(millis) * 0.1);
     measurements = (measurements + 1) % 10;

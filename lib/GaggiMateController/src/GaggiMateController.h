@@ -58,6 +58,7 @@ class GaggiMateController {
     GearpumpAddon *gearpumpAddon = nullptr;
 
     SoftWire *albaComms = nullptr;
+    std::recursive_mutex accessoryBusMutex;
 
     std::vector<ControllerConfig> configs;
 

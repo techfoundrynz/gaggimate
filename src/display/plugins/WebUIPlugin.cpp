@@ -9,6 +9,8 @@
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/webassets/web_ui_manifest.h>
+// End symbol emitted by web_ui_blob.S, including older generated manifests.
+extern const uint8_t gWebUiBlobEnd[];
 #include <esp32-hal-psram.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
@@ -132,6 +134,13 @@ void WebUIPlugin::serveWebAsset(AsyncWebServerRequest *request) {
     }
     if (asset == nullptr) {
         request->send(404, "text/plain", "Not found");
+        return;
+    }
+
+    const size_t blobSize = reinterpret_cast<uintptr_t>(gWebUiBlobEnd) - reinterpret_cast<uintptr_t>(gWebUiBlobStart);
+    if (asset->offset > blobSize || asset->length > blobSize - asset->offset) {
+        ESP_LOGE("WebUIPlugin", "Web asset exceeds embedded bundle: %s", asset->path);
+        request->send(503, "text/plain", "Web interface bundle mismatch. Rebuild and upload the display firmware.");
         return;
     }
 

@@ -70,6 +70,9 @@ class DefaultUI {
     void setupState();
 
     void handleScreenChange();
+#ifndef GAGGIMATE_SIM
+    void updateEncoderControls();
+#endif
 
     // Animate the dial meters' tick length on screen change (short on profile/new-menu, long elsewhere).
     void animateGaugeTicks(ScreensEnum from, ScreensEnum to);

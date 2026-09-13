@@ -40,6 +40,8 @@ bool Amoled_DisplayPanel::begin(Amoled_Display_Panel_Color_Order order) {
 }
 
 bool Amoled_DisplayPanel::installSD() {
+    if (hwConfig.sd_cs == -1)
+        return false;
     pinMode(hwConfig.sd_cs, OUTPUT);
     digitalWrite(hwConfig.sd_cs, HIGH);
 
@@ -52,6 +54,8 @@ bool Amoled_DisplayPanel::installSD() {
 }
 
 void Amoled_DisplayPanel::uninstallSD() {
+    if (hwConfig.sd_cs == -1)
+        return;
     SD_MMC.end();
     digitalWrite(hwConfig.sd_cs, LOW);
     pinMode(hwConfig.sd_cs, INPUT);
@@ -155,6 +159,11 @@ void Amoled_DisplayPanel::sleep() {
 void Amoled_DisplayPanel::wakeup() {}
 
 uint8_t Amoled_DisplayPanel::getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point) {
+    if (touchType == TOUCH_CST820) {
+        // Poll coordinates directly: the CST820 IRQ is a pulse, not a held-touch level.
+        // Touch coordinates are visible-panel coordinates, without the LCD GRAM offset.
+        return _touchDrv->getPoint(x_array, y_array, get_point);
+    }
     if (touchType == TOUCH_CST92XX) {
         return _touchDrv->getPoint(x_array, y_array, _touchDrv->getSupportTouchPoint());
     }
@@ -232,6 +241,20 @@ void Amoled_DisplayPanel::setRotation(uint8_t rotation) {
 }
 
 bool Amoled_DisplayPanel::initTouch() {
+    if (hwConfig.touch_cst820) {
+        auto *touch = new TouchClassCST816(); // SensorLib also handles CST820 (chip ID 0xB7).
+        touch->setPins(hwConfig.tp_rst, hwConfig.tp_int);
+        if (!touch->begin(Wire, CST816_SLAVE_ADDRESS, hwConfig.i2c_sda, hwConfig.i2c_scl)) {
+            delete touch;
+            ESP_LOGE("Amoled_DisplayPanel", "Unable to initialize CST820 touch");
+            return false;
+        }
+        touch->disableAutoSleep();
+        _touchDrv = touch;
+        touchType = TOUCH_CST820;
+        ESP_LOGI("Amoled_DisplayPanel", "Initialized %s", touch->getModelName());
+        return true;
+    }
     TouchDrvCST92xx *tmp = new TouchDrvCST92xx();
     tmp->setPins(hwConfig.tp_rst, hwConfig.tp_int);
 
@@ -284,7 +307,7 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
         digitalWrite(hwConfig.lcd_en, HIGH);
     }
 
-    bool success = display->begin(80000000);
+    bool success = display->begin(hwConfig.spi_hz);
     if (!success) {
         ESP_LOGE("Amoled_DisplayPanel", "Failed to initialize display");
         return false;

@@ -4,18 +4,20 @@
 #include <Arduino.h>
 #include <SoftWire.h>
 #include <VL35L0X/VL53L0X.h>
+#include <mutex>
 
 using distance_callback_t = std::function<void(int)>;
 
 class DistanceSensor {
   public:
-    DistanceSensor(SoftWire *wire, distance_callback_t callback);
+    DistanceSensor(SoftWire *wire, distance_callback_t callback, std::recursive_mutex &busMutex);
     void setup();
 
   private:
     void loop();
 
     SoftWire *i2c;
+    std::recursive_mutex &busMutex;
     VL53L0X *tof;
     xTaskHandle taskHandle;
     distance_callback_t _callback;

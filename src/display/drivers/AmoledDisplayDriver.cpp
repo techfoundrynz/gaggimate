@@ -1,6 +1,7 @@
 #include "AmoledDisplayDriver.h"
 #include "AmoledDisplay/pin_config.h"
 #include <Wire.h>
+#include <cstring>
 #include <display/drivers/common/LV_Helper.h>
 
 AmoledDisplayDriver *AmoledDisplayDriver::instance = nullptr;
@@ -23,9 +24,9 @@ static bool detectI2CDevice(uint8_t address, const char *deviceName = nullptr) {
 
 // Variant indices are persisted in NVS (GM-140) — only append, never reorder
 static constexpr AmoledHwConfig VARIANTS[] = {LILYGO_T_DISPLAY_S3_DS_HW_CONFIG, WAVESHARE_S3_TOUCH_AMOLED_1_43_HW_CONFIG,
-                                              WAVESHARE_S3_AMOLED_HW_CONFIG};
+                                              WAVESHARE_S3_AMOLED_HW_CONFIG, VIEWE_1_5_HW_CONFIG};
 static constexpr const char *VARIANT_NAMES[] = {"LilyGo T-Display", "Waveshare 1.43\" AMOLED Display",
-                                                "Waveshare AMOLED Display"};
+                                                "Waveshare AMOLED Display", "VIEWE 1.5\" AMOLED Knob Display"};
 static constexpr int VARIANT_COUNT = sizeof(VARIANTS) / sizeof(VARIANTS[0]);
 
 bool AmoledDisplayDriver::isCompatible() {
@@ -50,24 +51,34 @@ bool AmoledDisplayDriver::selectVariant(int variant) {
 
 void AmoledDisplayDriver::init() {
     panel = new Amoled_DisplayPanel(hwConfig);
-    ESP_LOGI("AmoledDisplayDriver", "Initializing LilyGo T-Display...");
+    ESP_LOGI("AmoledDisplayDriver", "Initializing AMOLED display...");
 
     if (!panel->begin()) {
         for (uint8_t i = 0; i < 20; i++) {
-            ESP_LOGE("AmoledDisplayDriver", "Error, failed to initialize T-Display");
+            ESP_LOGE("AmoledDisplayDriver", "Error, failed to initialize AMOLED display");
             delay(1000);
         }
         ESP.restart();
     }
 
     beginLvglHelper(*panel);
+    beginEncoder(hwConfig.encoder);
 }
 
-bool AmoledDisplayDriver::supportsSDCard() { return true; }
+bool AmoledDisplayDriver::supportsSDCard() { return hwConfig.sd_cs != -1; }
 
 bool AmoledDisplayDriver::installSDCard() { return panel->installSD(); }
 
 bool AmoledDisplayDriver::testHw(AmoledHwConfig hwConfig) {
+    if (hwConfig.touch_cst820) {
+        // Use SensorLib's chip identification, not just an ACK at a shared I2C address.
+        TouchClassCST816 touch;
+        touch.setPins(hwConfig.tp_rst, hwConfig.tp_int);
+        const bool found = touch.begin(Wire, CST816_SLAVE_ADDRESS, hwConfig.i2c_sda, hwConfig.i2c_scl) &&
+                           std::strcmp(touch.getModelName(), "CST820") == 0;
+        Wire.end();
+        return found;
+    }
     // No Wire on these pins, definitely wrong board
     if (!Wire.begin(hwConfig.i2c_sda, hwConfig.i2c_scl))
         return false;

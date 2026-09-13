@@ -374,9 +374,9 @@ void Controller::onIncompatibleController(const String &infoJson) {
 }
 
 void Controller::setupWifi() {
-    // Generate and persist a WPA2 AP password on first start
-    if (settings.getWifiApPassword().isEmpty()) {
-        settings.setWifiApPassword(generateShortID(DEFAULT_WIFI_AP_PASSWORD_LENGTH));
+    // Temporary bench password; also replace an already-generated saved password.
+    if (settings.getWifiApPassword() != "gaggimate") {
+        settings.setWifiApPassword("gaggimate");
     }
 
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
@@ -1199,9 +1199,9 @@ bool Controller::isBluetoothScaleHealthy() const {
     return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
 }
 
-void Controller::onFlush() {
+void Controller::onFlush(bool holdUntilRelease) {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
-    const int duration = settings.getFlushDuration();
+    const int duration = holdUntilRelease ? 0 : settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
     auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay());

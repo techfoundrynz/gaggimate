@@ -1,6 +1,5 @@
 #include "Max31855Thermocouple.h"
 #include <Arduino.h>
-#include <SPI.h>
 #include <freertos/FreeRTOS.h>
 
 Max31855Thermocouple::Max31855Thermocouple(const int csPin, const int misoPin, const int sckPin,
@@ -17,7 +16,8 @@ float Max31855Thermocouple::read() { return isErrorState() ? 0.0f : temperature;
 bool Max31855Thermocouple::isErrorState() { return temperature <= 0 || errorCount >= MAX31855_MAX_ERRORS; }
 
 void Max31855Thermocouple::setup() {
-    SPI.begin();
+    // The three-pin MAX31855 constructor uses software SPI. Starting hardware
+    // SPI here would also claim the board's default SPI pins unnecessarily.
     pinMode(csPin, OUTPUT);
     digitalWrite(csPin, HIGH);
     max31855->begin();

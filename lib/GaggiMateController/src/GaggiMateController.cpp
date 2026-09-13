@@ -6,6 +6,7 @@
 #include <peripherals/SimplePump.h>
 
 #include <utility>
+#include <peripherals/AccessoryBus.h>
 
 GaggiMateController::GaggiMateController(String version) : _version(std::move(version)) {
     configs.push_back(GM_STANDARD_REV_1X);
@@ -56,15 +57,17 @@ void GaggiMateController::setup() {
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
 
     // 4-Pin peripheral port
+    const bool accessoryBusReady = prepareAccessoryBus(_config.sunriseSdaPin, _config.sunriseSclPin);
     albaComms = new SoftWire(_config.sunriseSdaPin, _config.sunriseSclPin);
     albaComms->setTxBuffer(albaSwTxBuffer, sizeof(albaSwTxBuffer));
     albaComms->setRxBuffer(albaSwRxBuffer, sizeof(albaSwRxBuffer));
     albaComms->setTimeout_ms(200);
     albaComms->setDelay_us(20);
-    albaComms->begin();
-    this->ledController = new LedController(albaComms);
-    this->distanceSensor = new DistanceSensor(albaComms, [this](int distance) { _comms.sendTofMeasurement(distance); });
-    if (this->ledController->isAvailable()) {
+    if (accessoryBusReady) albaComms->begin();
+    this->ledController = new LedController(albaComms, accessoryBusMutex);
+    this->distanceSensor = new DistanceSensor(albaComms, [this](int distance) { _comms.sendTofMeasurement(distance); },
+                                              accessoryBusMutex);
+    if (accessoryBusReady && this->ledController->isAvailable()) {
         _config.capabilites.ledControls = true;
         _config.capabilites.tof = true;
         _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });

@@ -25,3 +25,11 @@ packer = os.path.join(project_dir, "scripts", "embed_webui.py")
 if not os.path.isfile(manifest):
     print("embed_webui_pre: no web bundle found, writing stub (run build_webui.sh for the real UI)")
     subprocess.check_call([sys.executable, packer, "--out", out_dir, "--stub"])
+
+# SCons does not discover the assembler's .incbin dependency. The generated .S
+# file is unchanged when only the bundle bytes change, so an incremental build
+# can otherwise link an old blob with the new C++ manifest (even the 1-byte stub).
+env.Depends(  # noqa: F821
+    "$BUILD_DIR/src/display/webassets/web_ui_blob.S.o",
+    os.path.join(out_dir, "web_ui.bin"),
+)

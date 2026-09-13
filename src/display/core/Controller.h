@@ -120,7 +120,7 @@ class Controller {
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
-    void onFlush();
+    void onFlush(bool holdUntilRelease = false);
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -

@@ -5,6 +5,12 @@ void ButtonHandler::setConfig(const Config &cfg) {
     config = cfg;
 }
 
+void ButtonHandler::reset() {
+    std::lock_guard<std::mutex> guard(mutex);
+    for (auto &s : state) s = {};
+    comboActive = false;
+}
+
 void ButtonHandler::onRawState(uint8_t index, bool pressed, unsigned long now) {
     if (index >= BUTTON_COUNT)
         return;
@@ -51,12 +57,14 @@ void ButtonHandler::loop(unsigned long now) {
         std::lock_guard<std::mutex> guard(mutex);
         for (uint8_t i = 0; i < BUTTON_COUNT; i++) {
             State &s = state[i];
-            if (s.pending && now - s.pressedAt >= COMBO_WINDOW_MS) {
+            // Arduino millis() wraps at 32 bits, also when exercised on a 64-bit host.
+            const uint32_t elapsed = static_cast<uint32_t>(now - s.pressedAt);
+            if (s.pending && elapsed >= COMBO_WINDOW_MS) {
                 s.pending = false;
                 press(i, s.pressedAt, events);
             }
             if (s.logical && config.momentary && config.longPress[i] && !s.longFired && !s.clickFired &&
-                now - s.pressedAt >= LONG_PRESS_MS) {
+                elapsed >= config.longPressMs) {
                 s.longFired = true;
                 events.push_back({i, Event::LONG_PRESS});
             }
