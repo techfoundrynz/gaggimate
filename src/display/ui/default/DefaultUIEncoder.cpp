@@ -2,6 +2,7 @@
 
 #ifndef GAGGIMATE_SIM
 #include "EncoderControls.h"
+#include "PressFeedback.h"
 #include "eez/actions.h"
 #include <display/core/Controller.h>
 #include <display/drivers/common/Encoder.h>
@@ -44,6 +45,7 @@ void DefaultUI::updateEncoderControls() {
     // Wake uses exactly the same readiness/connection checks as touch.
     if (targetScreen != screen || brewConfirmVisible) return;
     if (event == EncoderPress::Event::Click && page == EncoderPage::Standby) {
+        pulsePressFeedback(objects.touch_icon);
         action_on_wakeup(nullptr);
         return;
     }
@@ -66,18 +68,28 @@ void DefaultUI::updateEncoderControls() {
         case EncoderAction::BrewDismiss:
             // Match both status-screen buttons: stop while running, or
             // acknowledge completion without accidentally starting another brew.
-            if (controller->getMode() == MODE_BREW) action_on_brew_cancel(nullptr);
+            if (controller->getMode() == MODE_BREW) {
+                pulsePressFeedback(controller->isActive() ? objects.pause_button : objects.check_button);
+                action_on_brew_cancel(nullptr);
+            }
             break;
         case EncoderAction::BrewToggle:
             if (controller->getMode() != MODE_BREW) break;
+            pulsePressFeedback(objects.start_button);
             if (controller->isActive()) action_on_brew_cancel(nullptr);
             else action_on_brew_start(nullptr);
             break;
         case EncoderAction::WaterToggle:
-            if (controller->getMode() == MODE_WATER) action_on_simple_process_toggle(nullptr);
+            if (controller->getMode() == MODE_WATER) {
+                pulsePressFeedback(objects.water_start_button);
+                action_on_simple_process_toggle(nullptr);
+            }
             break;
         case EncoderAction::GrindToggle:
-            if (controller->getMode() == MODE_GRIND) action_on_grind_toggle(nullptr);
+            if (controller->getMode() == MODE_GRIND) {
+                pulsePressFeedback(objects.grind_start_button);
+                action_on_grind_toggle(nullptr);
+            }
             break;
         default: break;
         }
