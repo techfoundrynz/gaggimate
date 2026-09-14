@@ -18,6 +18,7 @@
 #include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
+#include <display/plugins/HardwareScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
@@ -62,6 +63,7 @@ void Controller::setup() {
 #endif
 
     pluginManager = new PluginManager();
+    setupScale();
     warnings.setup(this);
 #ifndef GAGGIMATE_HEADLESS
     ui = new DefaultUI(this, driver, pluginManager);
@@ -101,6 +103,9 @@ void Controller::setup() {
     pluginManager->registerPlugin(new ImprovPlugin());
 #endif
     pluginManager->registerPlugin(&ShotHistory);
+    if (settings.isHardwareScaleActive()) {
+        pluginManager->registerPlugin(&HardwareScales);
+    }
 #ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
 #endif
@@ -306,6 +311,13 @@ void Controller::setupBluetooth() {
     });
     comms.onVolumetricMeasurement(
         [this](float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION); });
+    // A display restarted with the plugin disabled must stop any previous reader
+    // still running on the controller. The enabled plugin sends its pins on connect.
+    if (!settings.isHardwareScaleActive()) {
+        pluginManager->on("controller:bluetooth:connect", [this](const Event &) {
+            comms.configureHardwareScale(false, 0, 0, 0);
+        });
+    }
     comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", tofDistance);
@@ -530,6 +542,7 @@ void Controller::loop() {
 }
 
 void Controller::loopLogic() {
+    if (!isScaleHealthy()) onScaleUnavailable();
     if (isErrorState()) {
         loopControl();
         return;
@@ -664,9 +677,9 @@ String Controller::getSystemStateMessage() const {
 
 bool Controller::isVolumetricAvailable() const {
 #ifdef NIGHTLY_BUILD
-    return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
+    return isScaleHealthy() || systemInfo.capabilities.dimming;
 #else
-    return isBluetoothScaleHealthy();
+    return isScaleHealthy();
 #endif
 }
 
@@ -989,9 +1002,9 @@ void Controller::activate(bool ignoreWarnings) {
     if (isVolumetricAvailable()) {
 #ifdef NIGHTLY_BUILD
         currentVolumetricSource =
-            isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
+            isScaleHealthy() ? VolumetricMeasurementSource::SCALE : VolumetricMeasurementSource::FLOW_ESTIMATION;
 #else
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+        currentVolumetricSource = VolumetricMeasurementSource::SCALE;
 #endif
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
@@ -1081,7 +1094,7 @@ void Controller::activateGrind() {
         return;
     clear();
     if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+        currentVolumetricSource = VolumetricMeasurementSource::SCALE;
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
@@ -1173,11 +1186,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     }
     pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
                                ? F("controller:volumetric-measurement:estimation:change")
-                               : F("controller:volumetric-measurement:bluetooth:change"),
+                               : F("controller:volumetric-measurement:scale:change"),
                            "value", static_cast<float>(measurement));
-    if (source == VolumetricMeasurementSource::BLUETOOTH) {
-        lastBluetoothMeasurement = millis();
-    }
 
     if (currentVolumetricSource != source) {
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
@@ -1192,11 +1202,6 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     if (lastProcess != nullptr && !lastProcess->isComplete()) {
         lastProcess->updateVolume(measurement);
     }
-}
-
-bool Controller::isBluetoothScaleHealthy() const {
-    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
-    return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
 }
 
 void Controller::onFlush(bool holdUntilRelease) {

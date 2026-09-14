@@ -21,6 +21,7 @@ class GaggiMateServer {
     using AutotuneCallback = std::function<void(uint32_t testTime, uint32_t samples, uint32_t heaterWattage)>;
     using PressureScaleCallback = std::function<void(float scale)>;
     using TareCallback = std::function<void()>;
+    using HardwareScaleControlCallback = std::function<void(bool enabled, uint32_t clock, uint32_t left, uint32_t right)>;
     using LedCallback = std::function<void(uint8_t channel, uint8_t brightness)>;
 
     GaggiMateServer();
@@ -50,6 +51,7 @@ class GaggiMateServer {
     void sendVolumetricMeasurement(float volume);
     void sendTofMeasurement(uint32_t distance);
     void sendError(int code);
+    void sendHardwareScale(bool available, int32_t left, int32_t right, bool configError = false);
 
     // Drop the BLE link; the ping watchdog uses this so the display sees a real disconnect, not an in-band error.
     void disconnect() { _transport.disconnect(); }
@@ -75,6 +77,7 @@ class GaggiMateServer {
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
     void onPressureScale(PressureScaleCallback cb) { _pressureScaleCb = std::move(cb); }
     void onTare(TareCallback cb) { _tareCb = std::move(cb); }
+    void onHardwareScaleControl(HardwareScaleControlCallback cb) { _hardwareScaleCb = std::move(cb); }
     void onLedControl(LedCallback cb) { _ledCb = std::move(cb); }
 
   private:
@@ -95,6 +98,7 @@ class GaggiMateServer {
     AutotuneCallback _autotuneCb;
     PressureScaleCallback _pressureScaleCb;
     TareCallback _tareCb;
+    HardwareScaleControlCallback _hardwareScaleCb;
     LedCallback _ledCb;
 
     void registerHandlers();

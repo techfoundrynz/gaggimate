@@ -102,6 +102,20 @@ class AsyncWebServerRequest {
 
 using ArRequestHandlerFunction = std::function<void(AsyncWebServerRequest *)>;
 
+struct AsyncURIMatcher {
+    std::string uri;
+    static AsyncURIMatcher prefix(const char *uri) { return {uri}; }
+};
+
+class AsyncCallbackWebHandler {
+  public:
+    std::function<bool(AsyncWebServerRequest *)> filter;
+    AsyncCallbackWebHandler &setFilter(std::function<bool(AsyncWebServerRequest *)> value) {
+        filter = std::move(value);
+        return *this;
+    }
+};
+
 // Matches the real library's queued-message payload type.
 using AsyncWebSocketSharedBuffer = std::shared_ptr<std::vector<uint8_t>>;
 
@@ -152,8 +166,12 @@ class AsyncWebServer {
     ~AsyncWebServer();
 
     void on(const char *uri, ArRequestHandlerFunction handler) { _routes.push_back({HTTP_ANY, uri, std::move(handler)}); }
-    void on(const char *uri, WebRequestMethod method, ArRequestHandlerFunction handler) {
+    void on(const char *uri, int method, ArRequestHandlerFunction handler) {
         _routes.push_back({(int)method, uri, std::move(handler)});
+    }
+    AsyncCallbackWebHandler &on(const AsyncURIMatcher &matcher, int method, ArRequestHandlerFunction handler) {
+        _routes.push_back({method, matcher.uri, std::move(handler), true});
+        return _routes.back().options;
     }
     void onNotFound(ArRequestHandlerFunction handler) { _notFound = std::move(handler); }
     void addHandler(AsyncWebSocket *ws) { _ws = ws; }
@@ -169,6 +187,8 @@ class AsyncWebServer {
         int method;
         std::string uri;
         ArRequestHandlerFunction handler;
+        bool prefix = false;
+        AsyncCallbackWebHandler options;
     };
     struct StaticRoute {
         std::string uri;

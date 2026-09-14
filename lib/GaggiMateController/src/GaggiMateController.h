@@ -5,6 +5,7 @@
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
 #include <peripherals/FlowSensor.h>
+#include <peripherals/DualHx711.h>
 #include <peripherals/Heater.h>
 #include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
@@ -30,6 +31,7 @@ class GaggiMateController {
   private:
     void detectBoard();
     void detectAddon();
+    void setupHardwareScales();
     void handlePing();
     void handlePingTimeout(void);
     void thermalRunawayShutdown(void);
@@ -54,6 +56,8 @@ class GaggiMateController {
     DistanceSensor *distanceSensor = nullptr;
     ADSAdc *adc = nullptr;
     FlowSensor *flowSensor = nullptr;
+    DualHx711 *hardwareScale = nullptr;
+    std::atomic<bool> hardwareScaleConfigError{false};
 
     GearpumpAddon *gearpumpAddon = nullptr;
 

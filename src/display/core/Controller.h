@@ -4,6 +4,7 @@
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "ScaleStatus.h"
 #include "SystemInfo.h"
 #include <WiFi.h>
 #include <display/core/ButtonHandler.h>
@@ -20,7 +21,7 @@
 const IPAddress WIFI_AP_IP(4, 4, 4, 1); // the IP address the web server, Samsung requires the IP to be in public space
 const IPAddress WIFI_SUBNET_MASK(255, 255, 255, 0); // no need to change: https://avinetworks.com/glossary/subnet-mask/
 
-enum class VolumetricMeasurementSource { INACTIVE, FLOW_ESTIMATION, BLUETOOTH };
+enum class VolumetricMeasurementSource { INACTIVE, FLOW_ESTIMATION, SCALE };
 
 // What the display's standby label reports; shared with the web UI so headless users see the same thing.
 enum SystemState {
@@ -118,8 +119,13 @@ class Controller {
     void onProfileSave() const;
     void onProfileSaveAsNew();
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
-    void setVolumetricOverride(bool override) { volumetricOverride = override; }
-    bool isBluetoothScaleHealthy() const;
+    bool isScaleSelected(ScaleSource source) const { return scaleSource == source; }
+    gm::ScaleStatus getScaleStatus() const;
+    bool onScaleMeasurement(ScaleSource source, double measurement);
+    void onScaleDisconnected(ScaleSource source);
+    void tareScale();
+    bool isScaleHealthy() const;
+    void onScaleUnavailable();
     void onFlush(bool holdUntilRelease = false);
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
@@ -147,6 +153,7 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
+    void setupScale();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                       bool ledControl, bool tof, std::vector<uint32_t> addons);
     // Connected to a controller too old to speak the framed protocol: drive the
@@ -156,6 +163,7 @@ class Controller {
     void setupWifi();
 
     // Functional methods
+    void tareSelectedScale();
     void updateControl();
     // Switch the BLE connection interval based on whether a process is running.
     // force re-applies even if the desired state is unchanged (use on connect).
@@ -256,7 +264,6 @@ class Controller {
     unsigned long lastConfigResend = 0;
     static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
     static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
-    bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;
@@ -264,10 +271,13 @@ class Controller {
     bool sdcard = false;
     int error = 0;
 
-    // Bluetooth scale connection monitoring
+    // Selected scale connection monitoring
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
-    unsigned long lastBluetoothMeasurement = 0;
-    static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
+    ScaleSource scaleSource = ScaleSource::Bluetooth; // selected once at startup; changes require restart
+    mutable std::mutex scaleMutex;
+    unsigned long lastScaleMeasurement = 0;
+    bool scaleMeasurementReceived = false;
+    static const unsigned long SCALE_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
     xTaskHandle logicTaskHandle;

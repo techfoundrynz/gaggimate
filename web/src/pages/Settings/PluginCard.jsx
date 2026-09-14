@@ -20,6 +20,55 @@ export function PluginCard({
     <div className='space-y-4'>
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Hardware Scales Plugin</span>
+          <input
+            id='hardwareScaleActive'
+            name='hardwareScaleActive'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.hardwareScaleActive}
+            onChange={onChange('hardwareScaleActive')}
+            aria-label='Enable Hardware Scales'
+          />
+        </div>
+        {formData.hardwareScaleActive && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p>
+              Two HX711s supporting one tray. Wired weight takes priority over Bluetooth scales.
+            </p>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+              {[
+                ['hardwareScaleClock', 'Shared clock GPIO'],
+                ['hardwareScaleLeft', 'Left data GPIO'],
+                ['hardwareScaleRight', 'Right data GPIO'],
+              ].map(([key, label]) => (
+                <label key={key} className='form-control block' htmlFor={key}>
+                  <span className='mb-2 block text-sm font-medium'>{label}</span>
+                  <input
+                    id={key}
+                    name={key}
+                    type='number'
+                    min='0'
+                    max='48'
+                    step='1'
+                    className='input input-bordered w-full'
+                    value={formData[key]}
+                    onChange={onChange(key)}
+                    required
+                  />
+                </label>
+              ))}
+            </div>
+            <p className='text-sm'>
+              Use controller GPIO numbers, not connector positions. Defaults: clock 17, left 18,
+              right 39. Save and restart to apply, then open Calibration. Changing pins requires
+              recalibration.
+            </p>
+          </div>
+        )}
+      </div>
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
           <span className='text-xl font-medium'>Automatic Wakeup Schedule</span>
           <input
             id='autowakeupEnabled'

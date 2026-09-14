@@ -62,8 +62,25 @@ void MockController::update() {
     flow += (fDest - flow) * (1.0f - expf(-dt / 0.4f));
 
     // Water reaches the cup (scale) only with the brew valve open.
-    if (brewValveOpen && flow > 0.05f)
+    if (brewValveOpen && flow > 0.05f) {
         weight += flow * dt; // ~1 ml ≈ 1 g
+        collectedMass += flow * dt;
+    }
+    if (grinderRunning)
+        collectedMass += 3.0 * dt; // illustrative delivery, grams/second
+
+    if (scaleEnabled && now - lastScaleMs >= 50) {
+        lastScaleMs = now;
+        // Different gains and opposite polarity exercise the real dual-cell calibration.
+        // Collected coffee sits centrally; the movable test mass loads either support.
+        const int noise = static_cast<int>((now / 50) % 5) - 2;
+        const int32_t left =
+            static_cast<int32_t>(std::lround(100000 + 1000 * (scaleMass * scaleLeftShare + collectedMass / 2))) + noise;
+        const int32_t right =
+            static_cast<int32_t>(std::lround(-180000 - 1200 * (scaleMass * (1 - scaleLeftShare) + collectedMass / 2))) - noise;
+        if (onHardwareScale)
+            onHardwareScale(!scaleConfigError, left, right, scaleConfigError);
+    }
 
     if (now - lastSensorMs >= 100) {
         lastSensorMs = now;
@@ -78,4 +95,10 @@ void MockController::update() {
         if (onTof)
             onTof(40); // mm to the water surface — a comfortably full tank
     }
+}
+
+void MockController::configureHardwareScale(bool enabled, uint32_t clock, uint32_t left, uint32_t right) {
+    scaleEnabled = enabled;
+    // No physical GPIOs exist here; check only the shape of the requested mapping.
+    scaleConfigError = enabled && (clock > 48 || left > 48 || right > 48 || clock == left || clock == right || left == right);
 }

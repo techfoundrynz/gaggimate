@@ -3,7 +3,6 @@
 #include "ui.h"
 #include <Arduino.h>
 #include <display/main.h>
-#include <display/plugins/BLEScalePlugin.h>
 
 void action_on_wakeup(lv_event_t *e) {
     if (!controller.getClientController()->isConnected() || controller.getSystemInfo().protocolMismatch ||
@@ -57,8 +56,7 @@ void action_on_flush(lv_event_t *e) {
 };
 
 void action_on_volumetric_hold(lv_event_t *e) {
-    controller.getClientController()->tare();
-    BLEScales.tare();
+    controller.tareScale();
 };
 
 void action_on_profile_select(lv_event_t *e) { controller.getUI()->onProfileSwitch(); };

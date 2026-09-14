@@ -71,6 +71,24 @@ unchanged except for a few small `#ifndef GAGGIMATE_SIM` guards.
 
 The PlatformIO env is `[env:display-sim]` (`platform = native`) in `platformio.ini`.
 
+## Wired HX711 scales
+
+Enable **Hardware Scales** in the WebUI's **Settings → Plugins**, then save and
+restart. The simulator generates paired raw readings at 20 Hz through the same
+hardware-scale plugin used on the device; it does not bypass calibration.
+
+In **Settings → Calibration**, the simulator-only **Simulator load** controls let
+you clear the tray or place a 0–500 g test mass near either support or at its centre.
+Capture the empty tray, place your known mass on the left and capture it, then
+place the same mass on the right and capture/save. Wait two seconds after moving
+the mass. After calibration, verify the weight at all three positions and test tare.
+Brewing adds the mock pump's output to the tray; grinding adds an illustrative 3 g/s.
+Clearing/replacing the test load also removes any accumulated coffee from the tray.
+
+These readings model independent cell gains, opposite polarity and small ADC noise.
+GPIO numbers do not correspond to hardware in the simulator; it checks only range
+and uniqueness. Actual controller firmware performs board-specific pin validation.
+
 ## Caveats
 
 - **Compiled out** for the desktop: MQTT/HomeAssistant, HomeKit, mDNS, the WiFi

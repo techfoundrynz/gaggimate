@@ -1,7 +1,6 @@
 #include "BLEScalePlugin.h"
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
-#include <cmath> // For isfinite()
 #include <display/core/Controller.h>
 #include <scales/acaia.h>
 #include <scales/bookoo.h>
@@ -93,13 +92,6 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
         ESP_LOGW("BLEScalePlugin", "Controller disconnected, stopping BLE scan");
         active = false;
     });
-    manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
-    manager->on("controller:brew:end", [this](Event const &) {
-        if (scale != nullptr && scale->isConnected() && scale->hasTimerControl()) {
-            scale->stopTimer();
-        }
-    });
-    manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
@@ -138,15 +130,12 @@ void BLEScalePlugin::update() {
         return;
     }
 
-    // Don't update volumetric override if scale access might fail
     bool hasConnectedScale = false;
     if (scale != nullptr) {
         // Check if scale pointer is valid before accessing
         hasConnectedScale = scale->isConnected();
     }
-
-    if (controller->isVolumetricAvailable())
-        controller->setVolumetricOverride(hasConnectedScale);
+    if (!hasConnectedScale) controller->onScaleDisconnected(ScaleSource::Bluetooth);
 
     if (!active)
         return;
@@ -208,6 +197,7 @@ void BLEScalePlugin::scan() const {
 }
 
 void BLEScalePlugin::disconnect() {
+    if (controller != nullptr) controller->onScaleDisconnected(ScaleSource::Bluetooth);
     if (scale != nullptr) {
         // Add small delay to let any pending callbacks complete
         delay(50);
@@ -229,7 +219,7 @@ void BLEScalePlugin::disconnect() {
     }
 }
 
-void BLEScalePlugin::onProcessStart() const {
+void BLEScalePlugin::tare() const {
     if (scale != nullptr && scale->isConnected()) {
         // Double tare with validation
         scale->tare();
@@ -259,7 +249,9 @@ void BLEScalePlugin::pollScaleMetadata() {
     }
 }
 
-void BLEScalePlugin::tare() const { onProcessStart(); }
+void BLEScalePlugin::stopTimer() const {
+    if (scale != nullptr && scale->isConnected() && scale->hasTimerControl()) scale->stopTimer();
+}
 
 void BLEScalePlugin::establishConnection() {
     if (uuid.empty()) {
@@ -334,6 +326,7 @@ void BLEScalePlugin::establishConnection() {
 }
 
 void BLEScalePlugin::onMeasurement(float value) const {
+    if (controller == nullptr || !controller->isScaleSelected(ScaleSource::Bluetooth)) return;
     // Rate limiting to prevent callback flooding
     unsigned long now = millis();
     if (now - lastMeasurementTime < MIN_MEASUREMENT_INTERVAL_MS) {
@@ -341,29 +334,18 @@ void BLEScalePlugin::onMeasurement(float value) const {
     }
     lastMeasurementTime = now;
 
-    // Multiple safety checks to prevent crashes
-    if (controller == nullptr) {
-        return; // Silently ignore if controller is null
-    }
-
     // Check if we're being destroyed or in an unsafe state
     if (!active) {
         return; // Don't process measurements when not active
     }
 
-    // Validate the measurement value
-    if (!isfinite(value) || value < -1000.0f || value > 10000.0f) {
-        ESP_LOGW("BLEScalePlugin", "Invalid measurement value: %f, ignoring", value);
-        return;
-    }
-
     // Safe to call controller method
-    controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
+    if (!controller->onScaleMeasurement(ScaleSource::Bluetooth, value)) return;
 
     // If the scale driver also provides native flow rate (e.g. Bookoo), emit
     // it on the same tick so consumers get it at the scale's native cadence
-    // (~10 Hz) without having to poll. Controller.onVolumetricMeasurement
-    // updates lastBluetoothMeasurement timestamps as a side effect; we reuse
+    // (~10 Hz) without having to poll. Controller.onScaleMeasurement
+    // updates the scale measurement timestamp; we reuse
     // a lighter path here since flow is not gating shot state.
     if (scale != nullptr && scale->hasFlowRate() && pluginManager != nullptr) {
         pluginManager->trigger("controller:volumetric-measurement:scale-flow:change", "value", scale->getFlowRate());

@@ -535,7 +535,8 @@ bool AsyncWebServer::handleHttp(Conn &c) {
 void AsyncWebServer::dispatch(Conn &c, AsyncWebServerRequest &req) {
     std::string path(req._url.c_str());
     for (auto &r : _routes) {
-        if ((r.method == HTTP_ANY || (r.method & req._method)) && r.uri == path) {
+        if ((r.method == HTTP_ANY || (r.method & req._method)) && (r.prefix ? path.rfind(r.uri, 0) == 0 : r.uri == path) &&
+            (!r.options.filter || r.options.filter(&req))) {
             r.handler(&req);
             return;
         }

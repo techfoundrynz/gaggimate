@@ -191,6 +191,8 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/scales/hardware", HTTP_GET | HTTP_POST,
+              [this](AsyncWebServerRequest *request) { handleHardwareScale(request); });
     FS *fs = &LittleFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
@@ -334,6 +336,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWifiApPassword(request->arg("apPassword"));
             settings->setHomekit(request->hasArg("homekit"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
+            settings->setHardwareScaleActive(request->hasArg("hardwareScaleActive"));
+            if (request->hasArg("hardwareScaleClock")) settings->setHardwareScaleClock(request->arg("hardwareScaleClock").toInt());
+            if (request->hasArg("hardwareScaleLeft")) settings->setHardwareScaleLeft(request->arg("hardwareScaleLeft").toInt());
+            if (request->hasArg("hardwareScaleRight")) settings->setHardwareScaleRight(request->arg("hardwareScaleRight").toInt());
             if (request->hasArg("startupFillTime"))
                 settings->setStartupFillTime(request->arg("startupFillTime").toInt() * 1000);
             if (request->hasArg("steamFillTime"))
@@ -494,6 +500,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["pressureOffset"] = String(settings.getPressureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
     doc["boilerFillActive"] = settings.isBoilerFillActive();
+    doc["hardwareScaleActive"] = settings.isHardwareScaleActive();
+    doc["hardwareScaleClock"] = settings.getHardwareScaleClock();
+    doc["hardwareScaleLeft"] = settings.getHardwareScaleLeft();
+    doc["hardwareScaleRight"] = settings.getHardwareScaleRight();
     doc["startupFillTime"] = settings.getStartupFillTime() / 1000;
     doc["steamFillTime"] = settings.getSteamFillTime() / 1000;
     doc["smartGrindActive"] = settings.isSmartGrindActive();

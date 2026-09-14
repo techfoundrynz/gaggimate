@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
     bool shotTaken = false;
 
     while (!drv->shouldQuit()) {
+        controller.getClientController()->simulateGrinder(controller.isGrindActive());
         controller.loop();      // connection lifecycle, comms pump, plugins
         controller.loopLogic(); // process + control logic (normally a FreeRTOS task)
 

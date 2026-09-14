@@ -139,6 +139,14 @@ void Settings::setSavedScale(const String &savedScale) { this->savedScale.set(sa
 
 void Settings::setBoilerFillActive(bool boiler_fill_active) { boilerFillActive.set(boiler_fill_active); }
 
+void Settings::setHardwareScaleActive(bool active) { hardwareScaleActive.set(active); }
+
+void Settings::setHardwareScaleClock(int pin) { if (pin >= 0 && pin <= 48) hardwareScaleClock.set(pin); }
+
+void Settings::setHardwareScaleLeft(int pin) { if (pin >= 0 && pin <= 48) hardwareScaleLeft.set(pin); }
+
+void Settings::setHardwareScaleRight(int pin) { if (pin >= 0 && pin <= 48) hardwareScaleRight.set(pin); }
+
 void Settings::setStartupFillTime(int startup_fill_time) { startupFillTime.set(startup_fill_time); }
 
 void Settings::setSteamFillTime(int steam_fill_time) { steamFillTime.set(steam_fill_time); }

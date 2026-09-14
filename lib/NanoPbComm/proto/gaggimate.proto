@@ -44,6 +44,7 @@ message Payload {
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
+        HardwareScaleControl hardware_scale_control = 12;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -53,6 +54,7 @@ message Payload {
         VolumetricMeasurement volumetric = 24;
         TofMeasurement tof = 25;
         Error error = 26;
+        HardwareScaleReading hardware_scale = 27;
     }
 }
 
@@ -139,6 +141,21 @@ message PressureScale {
 }
 
 message Tare {}
+
+// Opt-in raw dual-HX711 acquisition. Calibration and tare live on the display.
+message HardwareScaleControl {
+    bool enabled = 1;
+    uint32 clock_pin = 2;
+    uint32 left_pin = 3;
+    uint32 right_pin = 4;
+}
+
+message HardwareScaleReading {
+    bool available = 1;
+    sint32 left = 2;
+    sint32 right = 3;
+    bool config_error = 4;
+}
 
 // One LED output's target brightness.
 message LedChannel {

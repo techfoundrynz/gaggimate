@@ -67,6 +67,7 @@ inline uint8_t defaultPriority(pb_size_t which) {
     case gaggimate_Payload_sensor_tag:
     case gaggimate_Payload_volumetric_tag:
     case gaggimate_Payload_tof_tag:
+    case gaggimate_Payload_hardware_scale_tag:
         return PRIO_LOW;
     default:
         return PRIO_NORMAL;

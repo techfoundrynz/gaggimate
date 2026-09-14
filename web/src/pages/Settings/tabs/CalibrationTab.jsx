@@ -5,8 +5,9 @@ import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
 import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
+import HardwareScaleCalibration from '../../../components/HardwareScaleCalibration.jsx';
 
-export function CalibrationTab({ formData, onChange }) {
+export function CalibrationTab({ formData }) {
   const apiService = useContext(ApiServiceContext);
 
   // Autotune state
@@ -48,6 +49,7 @@ export function CalibrationTab({ formData, onChange }) {
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
+      <HardwareScaleCalibration />
       {/* PID Autotune Section */}
       <Section title='PID Autotune' className='h-full'>
         {autotuneActive && (

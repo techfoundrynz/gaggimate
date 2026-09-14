@@ -47,6 +47,7 @@ class GaggiMateClient {
     using VolumetricCallback = std::function<void(float volume)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
+    using HardwareScaleCallback = std::function<void(bool available, int32_t left, int32_t right, bool configError)>;
 
     GaggiMateClient();
 
@@ -87,6 +88,13 @@ class GaggiMateClient {
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();
+    void configureHardwareScale(bool enabled, uint32_t clock, uint32_t left, uint32_t right) {
+        _mock.configureHardwareScale(enabled, clock, left, right);
+    }
+    void simulateScaleLoad(double mass, double leftShare) { _mock.setScaleLoad(mass, leftShare); }
+    double simulatedScaleMass() const { return _mock.getScaleMass(); }
+    double simulatedScaleLeftShare() const { return _mock.getScaleLeftShare(); }
+    void simulateGrinder(bool running) { _mock.setGrinderRunning(running); }
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 
     void send(const gm::Payload &payload);
@@ -106,6 +114,7 @@ class GaggiMateClient {
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
+    void onHardwareScale(HardwareScaleCallback cb) { _mock.onHardwareScale = std::move(cb); }
 
   private:
     MockController _mock;

@@ -77,10 +77,10 @@ class ShotHistoryPlugin : public Plugin {
     unsigned long extendedRecordingStart = 0;
     unsigned long lastWeightChangeTime = 0;
     float currentTemperature = 0.0f;
-    float currentBluetoothWeight = 0.0f;
+    float currentScaleWeight = 0.0f;
     float lastStableWeight = 0.0f;
-    float lastBluetoothWeight = 0.0f;
-    float currentBluetoothFlow = 0.0f;
+    float lastScaleWeight = 0.0f;
+    float currentScaleFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
     float currentPuckResistance = 0.0f;
     String currentProfileName;

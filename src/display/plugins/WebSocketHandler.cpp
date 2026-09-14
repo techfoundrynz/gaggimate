@@ -5,7 +5,6 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
-#include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
@@ -98,9 +97,9 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
-    // Subscribe to Bluetooth scale weight updates
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change",
-                      [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
+    // Subscribe to weight updates from the selected scale
+    pluginManager->on("controller:volumetric-measurement:scale:change",
+                      [this](Event const &event) { this->currentScaleWeight = event.getFloat("value"); });
 }
 
 void WebSocketHandler::attach(AsyncWebServer &server) {
@@ -373,11 +372,12 @@ void WebSocketHandler::publishState(unsigned long now) {
     sys["s"] = systemStateKey(controller->getSystemState());
     sys["m"] = controller->getSystemStateMessage();
     sys["c"] = controller->getError();
-    const bool bleConnected = BLEScales.isConnected();
-    doc["bc"] = bleConnected;
+    const auto scale = controller->getScaleStatus();
+    doc["sr"] = scale.ready;
+    doc["scaleSource"] = scale.source == ScaleSource::Wired ? "wired" : "bluetooth";
     // Scale battery: null when disconnected or the driver reports the UNKNOWN sentinel, so merging clients clear it.
-    if (bleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() != REMOTE_SCALES_BATTERY_UNKNOWN) {
-        doc["sbat"] = BLEScales.getBatteryLevel();
+    if (scale.batteryPercent >= 0) {
+        doc["sbat"] = scale.batteryPercent;
     } else {
         doc["sbat"] = nullptr;
     }
@@ -414,9 +414,8 @@ void WebSocketHandler::publishTelemetry() {
     if (controller->getClientController()->hasLatency()) {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }
-    const bool bleConnected = BLEScales.isConnected();
-    statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
-    statusDoc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
+    const bool scaleReady = controller->getScaleStatus().ready;
+    statusDoc["cw"] = scaleReady ? this->currentScaleWeight : 0;
     // Explicit null/zero so merging clients drop a finished process instead of keeping the last one.
     statusDoc["process"] = nullptr;
     statusDoc["pkr"] = 0;

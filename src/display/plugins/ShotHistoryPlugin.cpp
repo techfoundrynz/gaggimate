@@ -89,8 +89,8 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
-    pm->on("controller:volumetric-measurement:bluetooth:change",
-           [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
+    pm->on("controller:volumetric-measurement:scale:change",
+           [this](Event const &event) { currentScaleWeight = event.getFloat("value"); });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
@@ -135,17 +135,17 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        // Bluetooth weight flow (vf): derive from the same non-negative weight we
+        // Scale weight flow (vf): derive from the same non-negative weight we
         // store in sample.v so the two can never disagree, and skip the EMA update
         // on an implausible single-sample jump so one bad scale/BLE reading cannot
         // saturate vf for seconds. See GM-110.
-        const float btWeight = currentBluetoothWeight > 0.0f ? currentBluetoothWeight : 0.0f;
-        const float btDiff = btWeight - lastBluetoothWeight;
-        if (fabsf(btDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
-            const float btFlow = btDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
-            currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        const float scaleWeight = currentScaleWeight > 0.0f ? currentScaleWeight : 0.0f;
+        const float scaleWeightDiff = scaleWeight - lastScaleWeight;
+        if (fabsf(scaleWeightDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
+            const float scaleFlow = scaleWeightDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
+            currentScaleFlow = currentScaleFlow * 0.75f + scaleFlow * 0.25f;
         }
-        lastBluetoothWeight = btWeight;
+        lastScaleWeight = scaleWeight;
 
         ShotLogSample sample{};
         // Capture when this sampling pass actually runs. Older formats inferred
@@ -159,8 +159,8 @@ void ShotHistoryPlugin::record() {
         sample.fl = encodeSigned(controller->getCurrentPumpFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.vf = encodeSigned(currentBluetoothFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.v = encodeUnsigned(btWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        sample.vf = encodeSigned(currentScaleFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+        sample.v = encodeUnsigned(scaleWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
@@ -218,7 +218,7 @@ void ShotHistoryPlugin::record() {
                 return;
             }
 
-            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+            const float weightDiff = abs(currentScaleWeight - lastStableWeight);
 
             if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
                 if (lastWeightChangeTime == 0) {
@@ -231,7 +231,7 @@ void ShotHistoryPlugin::record() {
             } else {
                 // Weight changed, reset stabilization timer
                 lastWeightChangeTime = 0;
-                lastStableWeight = currentBluetoothWeight;
+                lastStableWeight = currentScaleWeight;
             }
 
             // Also stop extended recording after maximum duration
@@ -246,7 +246,7 @@ void ShotHistoryPlugin::record() {
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
         header.finalExitReason = finalExitReason; // why the shot ended (last phase exit or manual abort)
-        float finalWeight = currentBluetoothWeight;
+        float finalWeight = currentScaleWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
@@ -316,11 +316,11 @@ void ShotHistoryPlugin::startRecording() {
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;
-    currentBluetoothWeight = 0.0f;
+    currentScaleWeight = 0.0f;
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
-    currentBluetoothFlow = 0.0f;
-    lastBluetoothWeight = 0.0f;
+    currentScaleFlow = 0.0f;
+    lastScaleWeight = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     extendedRecording = false;
@@ -359,11 +359,11 @@ void ShotHistoryPlugin::endRecording() {
         }
     }
 
-    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+    if (recording && controller && controller->isVolumetricAvailable() && currentScaleWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
-        lastStableWeight = currentBluetoothWeight;
+        lastStableWeight = currentScaleWeight;
         lastWeightChangeTime = 0;
     }
 
@@ -442,8 +442,8 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
         }
     }
 
-    // Bit 2: Bluetooth scale connected
-    if (controller != nullptr && controller->isBluetoothScaleHealthy()) {
+    // Bit 2: selected scale connected (legacy Bluetooth-named format bit)
+    if (controller != nullptr && controller->isScaleHealthy()) {
         systemInfo |= SYSTEM_INFO_BLUETOOTH_SCALE_CONNECTED;
     }
 

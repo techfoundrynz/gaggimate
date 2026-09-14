@@ -45,7 +45,7 @@ enum SystemStatusFlowStructureFields {
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DISPLAY_VERSION = 8,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU = 9,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_PRESSURE_AVAILABLE = 10,
-    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES = 11,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALES = 11,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE = 12,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_MODE = 13,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_QRCODE_CONTENT = 14,
@@ -195,9 +195,9 @@ struct SystemStatusValue {
         value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_PRESSURE_AVAILABLE] = BooleanValue(pressure_available);
     }
 
-    bool bluetooth_scales() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES].getBoolean(); }
-    void bluetooth_scales(bool bluetooth_scales) {
-        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES] = BooleanValue(bluetooth_scales);
+    bool scales() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALES].getBoolean(); }
+    void scales(bool scales) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALES] = BooleanValue(scales);
     }
 
     bool grind_available() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE].getBoolean(); }

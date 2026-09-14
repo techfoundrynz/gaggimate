@@ -187,10 +187,10 @@ void DefaultUI::init() {
     pluginManager->on("profiles:profile:favorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
+    pluginManager->on("controller:volumetric-measurement:scale:change", [=](Event const &event) {
         double newWeight = event.getFloat("value");
-        if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
-            bluetoothWeight = newWeight;
+        if (round(newWeight * 10.0) != round(currentScaleWeight * 10.0)) {
+            currentScaleWeight = newWeight;
             rerender = true;
         }
     });
@@ -246,7 +246,7 @@ void DefaultUI::loop() {
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
-        currentWeight = FloatValue(bluetoothWeight);
+        currentWeight = FloatValue(currentScaleWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
         char timeBuf[12];
@@ -546,7 +546,7 @@ void DefaultUI::updateSystemStatus() {
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
-    systemStatus.bluetooth_scales(controller->isBluetoothScaleHealthy());
+    systemStatus.scales(controller->isScaleHealthy());
     const String controllerVersion = controller->getSystemInfo().version;
     if (stringChanged(systemStatus.controller_version(), controllerVersion.c_str()))
         systemStatus.controller_version(controllerVersion.c_str());

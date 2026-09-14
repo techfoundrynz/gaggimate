@@ -1,6 +1,5 @@
 #include "WarningManager.h"
 #include <display/core/Controller.h>
-#include <display/plugins/BLEScalePlugin.h>
 
 namespace {
 struct WarningInfo {
@@ -57,13 +56,13 @@ void WarningManager::sampleTemperature() {
 
 void WarningManager::evaluate() {
     const Settings &settings = controller->getSettings();
-    const bool scaleConnected = BLEScales.isConnected();
+    const auto scale = controller->getScaleStatus();
 
     active[WARNING_WATER] = controller->getSystemInfo().capabilities.tof && controller->isLowWaterLevel();
     active[WARNING_FLUSH] = controller->isFlushPending();
     active[WARNING_SWITCH] = controller->isSteamSwitchOn();
-    active[WARNING_SCALE_CONNECTED] = !scaleConnected && settings.getSavedScale() != "";
-    active[WARNING_SCALE_BATTERY] = scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
+    active[WARNING_SCALE_CONNECTED] = scale.configured && !scale.ready;
+    active[WARNING_SCALE_BATTERY] = scale.connected && scale.batteryPercent >= 0 && scale.batteryPercent < 20;
     active[WARNING_TEMPERATURE] = !temperatureStable;
 
     level[WARNING_WATER] = settings.getWarnWaterLevel();

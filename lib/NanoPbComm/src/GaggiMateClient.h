@@ -24,6 +24,7 @@ class GaggiMateClient {
     using VolumetricCallback = std::function<void(float volume)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
+    using HardwareScaleCallback = std::function<void(bool available, int32_t left, int32_t right, bool configError)>;
 
     GaggiMateClient();
 
@@ -75,6 +76,7 @@ class GaggiMateClient {
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();
+    void configureHardwareScale(bool enabled, uint32_t clock, uint32_t left, uint32_t right);
     // Drive several LED channels in one message; per-channel sends would coalesce down to a single channel.
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 
@@ -94,6 +96,7 @@ class GaggiMateClient {
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
+    void onHardwareScale(HardwareScaleCallback cb) { _hardwareScaleCb = std::move(cb); }
 
   private:
     BleClientTransport _transport;
@@ -108,6 +111,7 @@ class GaggiMateClient {
     VolumetricCallback _volumetricCb;
     TofCallback _tofCb;
     ErrorCallback _errorCb;
+    HardwareScaleCallback _hardwareScaleCb;
 
     void registerHandlers();
 };

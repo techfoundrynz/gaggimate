@@ -253,7 +253,7 @@
           },
           {
             "objID": "7a89b269-df6d-4dfc-8b8d-5e7d4d7f2e19",
-            "name": "bluetooth_scales",
+            "name": "scales",
             "type": "boolean"
           },
           {
@@ -1841,7 +1841,7 @@
                           "heightUnit": "content",
                           "children": [],
                           "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                          "hiddenFlag": "!system.bluetooth_scales",
+                          "hiddenFlag": "!system.scales",
                           "hiddenFlagType": "expression",
                           "clickableFlagType": "literal",
                           "flagScrollbarMode": "",
@@ -1898,7 +1898,7 @@
                           "heightUnit": "content",
                           "children": [],
                           "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                          "hiddenFlag": "system.bluetooth_scales",
+                          "hiddenFlag": "system.scales",
                           "hiddenFlagType": "expression",
                           "clickableFlagType": "literal",
                           "flagScrollbarMode": "",
@@ -1982,7 +1982,7 @@
                           },
                           "group": "",
                           "groupIndex": 0,
-                          "text": "system.bluetooth_scales ? String.format(\"%.1f\", scale_weight_current) + \"g\" : \"-\"",
+                          "text": "system.scales ? String.format(\"%.1f\", scale_weight_current) + \"g\" : \"-\"",
                           "textType": "expression",
                           "longMode": "WRAP",
                           "recolor": false,
@@ -4579,7 +4579,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "(system.bluetooth_scales && ! brew_process_info.is_complete ? String.format(\"%.1f\", brew_process_info.current_volume) + \" g / \" : \"\") + brew_process_info.elapsed_time",
+                  "text": "(system.scales && ! brew_process_info.is_complete ? String.format(\"%.1f\", brew_process_info.current_volume) + \" g / \" : \"\") + brew_process_info.elapsed_time",
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -8550,7 +8550,7 @@
                     }
                   ],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SNAPPABLE",
-                  "hiddenFlag": "!system.volumetric_available || !system.bluetooth_scales",
+                  "hiddenFlag": "!system.volumetric_available || !system.scales",
                   "hiddenFlagType": "expression",
                   "clickableFlag": true,
                   "clickableFlagType": "literal",

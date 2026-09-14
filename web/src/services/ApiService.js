@@ -188,7 +188,7 @@ export default class ApiService {
     map('gt', 'grindTarget', v => v || 0);
     map('gact', 'grindActive', v => v || false);
     map('cw', 'currentWeight', v => v || 0);
-    map('bc', 'bluetoothConnected', v => v || false);
+    map('sr', 'scaleReady', v => v || false);
     map('sbat', 'scaleBattery', v => v ?? null);
     map('process', 'process', v => v || null);
     map('rssi', 'rssi', v => v || 0);

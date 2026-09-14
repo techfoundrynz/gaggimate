@@ -207,4 +207,20 @@ void GaggiMateClient::registerHandlers() {
         if (_errorCb)
             _errorCb(static_cast<int>(p.content.error.code));
     });
+    _endpoint.on(gaggimate_Payload_hardware_scale_tag, [this](const gm::Payload &p) {
+        if (_hardwareScaleCb) {
+            const auto &reading = p.content.hardware_scale;
+            _hardwareScaleCb(reading.available, reading.left, reading.right, reading.config_error);
+        }
+    });
+}
+
+void GaggiMateClient::configureHardwareScale(bool enabled, uint32_t clock, uint32_t left, uint32_t right) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_hardware_scale_control_tag;
+    p.content.hardware_scale_control.enabled = enabled;
+    p.content.hardware_scale_control.clock_pin = clock;
+    p.content.hardware_scale_control.left_pin = left;
+    p.content.hardware_scale_control.right_pin = right;
+    _endpoint.send(p);
 }

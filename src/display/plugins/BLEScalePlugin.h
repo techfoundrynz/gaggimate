@@ -3,6 +3,7 @@
 #include "../core/Plugin.h"
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
+#include <memory>
 
 void on_ble_measurement(float value);
 
@@ -44,6 +45,7 @@ class BLEScalePlugin : public Plugin {
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;
+    void stopTimer() const;
 
     // Accessors for the native scale fields that drivers optionally expose
     // (see RemoteScales). Each returns a sentinel value if not supported.
@@ -62,7 +64,6 @@ class BLEScalePlugin : public Plugin {
 
   private:
     void update();
-    void onProcessStart() const;
     void pollScaleMetadata();
 
     void establishConnection();

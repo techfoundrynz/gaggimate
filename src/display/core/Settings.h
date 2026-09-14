@@ -98,6 +98,10 @@ class Settings {
     String getOTAChannel() const { return otaChannel.get(); }
     String getSavedScale() const { return savedScale.get(); }
     bool isBoilerFillActive() const { return boilerFillActive.get(); }
+    bool isHardwareScaleActive() const { return hardwareScaleActive.get(); }
+    int getHardwareScaleClock() const { return hardwareScaleClock.get(); }
+    int getHardwareScaleLeft() const { return hardwareScaleLeft.get(); }
+    int getHardwareScaleRight() const { return hardwareScaleRight.get(); }
     int getStartupFillTime() const { return startupFillTime.get(); }
     int getSteamFillTime() const { return steamFillTime.get(); }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
@@ -193,6 +197,10 @@ class Settings {
     void setOTAChannel(const String &otaChannel);
     void setSavedScale(const String &savedScale);
     void setBoilerFillActive(bool boiler_fill_active);
+    void setHardwareScaleActive(bool active);
+    void setHardwareScaleClock(int pin);
+    void setHardwareScaleLeft(int pin);
+    void setHardwareScaleRight(int pin);
     void setStartupFillTime(int startup_fill_time);
     void setSteamFillTime(int steam_fill_time);
     void setSmartGrindActive(bool smart_grind_active);
@@ -283,6 +291,10 @@ class Settings {
     Property<bool> homekit{registry, "hk", false};
     Property<bool> volumetricTarget{registry, "vt", false};
     Property<bool> boilerFillActive{registry, "bf_a", false};
+    Property<bool> hardwareScaleActive{registry, "hws_a", false};
+    Property<int> hardwareScaleClock{registry, "hws_clk", 17};
+    Property<int> hardwareScaleLeft{registry, "hws_l", 18};
+    Property<int> hardwareScaleRight{registry, "hws_r", 39};
     Property<int> startupFillTime{registry, "bf_su", 5000};
     Property<int> steamFillTime{registry, "bf_st", 5000};
     Property<bool> smartGrindActive{registry, "sg_a", false};

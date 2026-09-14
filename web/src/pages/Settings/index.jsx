@@ -119,6 +119,7 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
   const checkboxKeys = [
     'homekit',
     'boilerFillActive',
+    'hardwareScaleActive',
     'smartGrindActive',
     'homeAssistant',
     'momentaryButtons',
@@ -255,6 +256,7 @@ export function Settings() {
         [
           'homekit',
           'boilerFillActive',
+          'hardwareScaleActive',
           'smartGrindActive',
           'smartGrindToggle',
           'homeAssistant',

@@ -186,4 +186,19 @@ void GaggiMateServer::registerHandlers() {
             _ledCb(static_cast<uint8_t>(p.content.led.channels[i].channel),
                    static_cast<uint8_t>(p.content.led.channels[i].brightness));
     });
+    _endpoint.on(gaggimate_Payload_hardware_scale_control_tag, [this](const gm::Payload &p) {
+        const auto &config = p.content.hardware_scale_control;
+        if (_hardwareScaleCb) _hardwareScaleCb(config.enabled, config.clock_pin, config.left_pin, config.right_pin);
+    });
+}
+
+void GaggiMateServer::sendHardwareScale(bool available, int32_t left, int32_t right, bool configError) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_hardware_scale_tag;
+    p.content.hardware_scale.available = available;
+    p.content.hardware_scale.left = left;
+    p.content.hardware_scale.right = right;
+    p.content.hardware_scale.config_error = configError;
+    if (configError) _endpoint.send(p);
+    else _endpoint.sendUnreliable(p);
 }
