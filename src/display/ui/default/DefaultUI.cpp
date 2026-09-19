@@ -1,4 +1,5 @@
 #include "DefaultUI.h"
+#include "StartupFade.h"
 
 #include <WiFi.h>
 #include <display/core/Controller.h>
@@ -21,7 +22,7 @@
 
 static EffectManager effect_mgr;
 
-static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
+static constexpr uint32_t STARTUP_FADE_MS = 1000; // fade-in duration on power-up
 
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
@@ -272,6 +273,9 @@ void DefaultUI::loop() {
     }
 
     ui_tick();
+#ifndef GAGGIMATE_SIM
+    updateEncoderControls();
+#endif
     lv_task_handler();
 }
 
@@ -360,12 +364,7 @@ void DefaultUI::setupPanel() {
     applyTheme();
     ui_tick();
 
-    lv_obj_t *standby = lv_scr_act();
-    lv_obj_t *black = lv_obj_create(nullptr);
-    lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
-    lv_scr_load(black);
-    lv_scr_load_anim(standby, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+    startStartupFade(STARTUP_FADE_MS);
 
     lv_task_handler();
 
