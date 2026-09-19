@@ -33,6 +33,7 @@ enum Amoled_Display_Panel_TouchType {
     TOUCH_UNKNOWN,
     TOUCH_FT3168,
     TOUCH_CST92XX,
+    TOUCH_CST820,
 };
 
 enum Amoled_Display_Panel_Color_Order {

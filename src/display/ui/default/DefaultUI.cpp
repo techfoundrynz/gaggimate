@@ -1,4 +1,5 @@
 #include "DefaultUI.h"
+#include "StartupFade.h"
 
 #include <WiFi.h>
 #include <display/core/Controller.h>
@@ -425,6 +426,9 @@ void DefaultUI::loop() {
                 lv_obj_set_style_img_opa(icon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
+#ifndef GAGGIMATE_SIM
+    updateEncoderControls();
+#endif
     lv_task_handler();
 }
 
@@ -591,12 +595,7 @@ void DefaultUI::setupPanel() {
     }
     ui_tick();
 
-    lv_obj_t *startScreen = lv_scr_act();
-    lv_obj_t *black = lv_obj_create(nullptr);
-    lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
-    lv_scr_load(black);
-    lv_scr_load_anim(startScreen, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+    startStartupFade(STARTUP_FADE_MS);
 
     lv_task_handler();
 
