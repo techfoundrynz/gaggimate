@@ -83,6 +83,9 @@ class DefaultUI {
     void setupState();
 
     void handleScreenChange();
+#ifndef GAGGIMATE_SIM
+    void updateEncoderControls();
+#endif
 
     // Animate the dial meters' tick length (short on profile/menu/info and chart-mode status, long elsewhere).
     void animateGaugeTicks(bool fromShort, bool toShort);

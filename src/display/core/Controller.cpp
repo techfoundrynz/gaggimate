@@ -1515,9 +1515,9 @@ bool Controller::isHardwareScaleHealthy() const {
     return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
-void Controller::onFlush() {
+void Controller::onFlush(bool holdUntilRelease) {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
-    const int duration = settings.getFlushDuration();
+    const int duration = holdUntilRelease ? 0 : settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
     profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
