@@ -39,6 +39,15 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+
+        # Forks without the update-server secrets skip this. Device OTA does not use
+        # this server -- it reads the GitHub release directly (see RELEASE_URL in
+        # src/display/plugins/WebUIPlugin.h) -- so a missing host must not fail the
+        # build and block the release job that depends on it.
+        if [[ -z "${UPDATE_SERVER_HOST:-}" || -z "${UPDATE_SERVER_API_KEY:-}" ]]; then
+          echo "::notice::UPDATE_SERVER_HOST/API_KEY not set, skipping ${{ inputs.target }} upload"
+          exit 0
+        fi
         
         FORM_ARGS=(
           -F "channel=${{ inputs.channel }}"
