@@ -35,10 +35,6 @@ class Max31855Thermocouple : public TemperatureSensor {
 
     float temperature = .0f;
 
-    int csPin = 0;
-    int misoPin = 0;
-    int sckPin = 0;
-
     temperature_callback_t callback;
     temperature_error_callback_t error_callback;
 

@@ -1,12 +1,11 @@
 #include "Max31855Thermocouple.h"
 #include <Arduino.h>
-#include <SPI.h>
 #include <freertos/FreeRTOS.h>
 
 Max31855Thermocouple::Max31855Thermocouple(const int csPin, const int misoPin, const int sckPin,
                                            const temperature_callback_t &callback,
                                            const temperature_error_callback_t &error_callback)
-    : taskHandle(nullptr), csPin(csPin), misoPin(misoPin), sckPin(sckPin) {
+    : taskHandle(nullptr) {
     max31855 = new MAX31855(csPin, misoPin, sckPin);
     this->callback = callback;
     this->error_callback = error_callback;
@@ -17,11 +16,9 @@ float Max31855Thermocouple::read() { return isErrorState() ? 0.0f : temperature;
 bool Max31855Thermocouple::isErrorState() { return temperature <= 0 || errorCount >= MAX31855_MAX_ERRORS; }
 
 void Max31855Thermocouple::setup() {
-    SPI.begin();
-    pinMode(csPin, OUTPUT);
-    digitalWrite(csPin, HIGH);
+    // The three-pin constructor selects software SPI, so the library never touches the
+    // SPI object; SPI.begin() would only claim the board's default pins for an unused bus.
     max31855->begin();
-    max31855->setSPIspeed(1000000);
 
     xTaskCreate(monitorTask, "Max31855Thermocouple::monitor", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
