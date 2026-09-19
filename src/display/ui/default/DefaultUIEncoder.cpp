@@ -2,15 +2,41 @@
 
 #ifndef GAGGIMATE_SIM
 #include "EncoderControls.h"
+#include "PressFeedback.h"
 #include "eez/actions.h"
 #include <display/core/Controller.h>
 #include <display/drivers/common/Encoder.h>
 #include <algorithm>
 
+// The control a click on this page would activate, as the EEZ object slot rather than
+// a raw pointer: EEZ nulls the slot when it destroys a screen, so releasing after that
+// cannot touch a freed object.
+static lv_obj_t **encoderClickTarget(EncoderPage page, Controller *controller) {
+    switch (page) {
+    case EncoderPage::Standby: return &objects.touch_icon;
+    case EncoderPage::Brew: return controller->getMode() == MODE_BREW ? &objects.start_button : nullptr;
+    case EncoderPage::BrewStatus:
+        if (controller->getMode() != MODE_BREW) {
+            return nullptr;
+        }
+        return controller->isActive() ? &objects.pause_button : &objects.check_button;
+    case EncoderPage::Water: return controller->getMode() == MODE_WATER ? &objects.water_start_button : nullptr;
+    case EncoderPage::Grind: return controller->getMode() == MODE_GRIND ? &objects.grind_start_button : nullptr;
+    default: return nullptr;
+    }
+}
+
 void DefaultUI::updateEncoderControls() {
     static EncoderPress press;
     static bool encoderFlushHeld = false;
+    // Held from the press edge to release, so feedback is visible before the action runs.
+    // Pulsing on click was invisible here: EEZ hides start_button the moment a brew starts.
+    static lv_obj_t **heldTarget = nullptr;
     const auto input = readEncoder();
+    if (!input.pressed && heldTarget) {
+        setPressFeedback(*heldTarget, false);
+        heldTarget = nullptr;
+    }
     // A flush changes to the status screen. Always deliver release before any
     // screen/readiness guards, including when the input queue loses an edge.
     if (encoderFlushHeld && (!input.pressed || input.cancelled || !controller->isActive())) {
@@ -18,6 +44,10 @@ void DefaultUI::updateEncoderControls() {
         encoderFlushHeld = false;
     }
     if (input.cancelled) {
+        if (heldTarget) {
+            setPressFeedback(*heldTarget, false);
+            heldTarget = nullptr;
+        }
         press.reset();
         return;
     }
@@ -45,12 +75,19 @@ void DefaultUI::updateEncoderControls() {
     if (targetScreen != screen || brewConfirmVisible) {
         return;
     }
+    const bool linkReady = controller->isReady() && controller->getClientController()->isConnected() &&
+                           !controller->getSystemInfo().protocolMismatch && !controller->isErrorState();
+    if (input.pressed && !heldTarget && (page == EncoderPage::Standby || linkReady)) {
+        heldTarget = encoderClickTarget(page, controller);
+        if (heldTarget) {
+            setPressFeedback(*heldTarget, true);
+        }
+    }
     if (event == EncoderPress::Event::Click && page == EncoderPage::Standby) {
         action_on_wakeup(nullptr);
         return;
     }
-    if (!controller->isReady() || !controller->getClientController()->isConnected() ||
-        controller->getSystemInfo().protocolMismatch || controller->isErrorState()) {
+    if (!linkReady) {
         return;
     }
 
