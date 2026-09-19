@@ -1,0 +1,180 @@
+name: Sync with upstream
+
+# Rebases this fork's patch stack onto jniebuhr/gaggimate master, on demand.
+#
+# The fork carries a small permanent delta (OTA release URL, CI upload guard, and
+# the display/controller work upstream declined). Rebasing keeps that delta a
+# visible, re-appliable stack on top of upstream rather than burying it in merges:
+#   git log --oneline upstream/master..master
+#
+# Requires a SYNC_TOKEN secret (classic PAT, scopes: repo + workflow). The default
+# GITHUB_TOKEN is not enough for two reasons:
+#   1. It may not create or update files under .github/workflows/, and the stack
+#      contains this very file, so every replay touches one.
+#   2. Pushes made with it do not trigger other workflows, so the nightly build
+#      would never fire after a sync.
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: Upstream branch to rebase onto
+        default: master
+        required: true
+      dry_run:
+        description: Rebase and verify only, do not push
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: https://github.com/jniebuhr/gaggimate.git
+  # Guards against a conflict resolution silently reverting the OTA redirect.
+  EXPECTED_RELEASE_URL: https://github.com/techfoundrynz/gaggimate/releases/
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+
+      - name: Configure git
+        run: |
+          set -euo pipefail
+          git config user.name "gaggimate-sync"
+          git config user.email "sync@users.noreply.github.com"
+          # Reuse previous conflict resolutions; WebUIPlugin.* is upstream's hottest file.
+          git config rerere.enabled true
+          git config rerere.autoUpdate true
+
+      - name: Restore rerere cache
+        uses: actions/cache@v4
+        with:
+          path: .git/rr-cache
+          key: rr-cache-${{ github.run_id }}
+          restore-keys: rr-cache-
+
+      - name: Fetch upstream
+        env:
+          UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        run: |
+          set -euo pipefail
+          git remote add upstream "$UPSTREAM_REPO"
+          git fetch --no-tags upstream "$UPSTREAM_REF"
+          echo "UPSTREAM_SHA=$(git rev-parse "upstream/$UPSTREAM_REF")" >> "$GITHUB_ENV"
+          echo "BEFORE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Record patch stack
+        env:
+          UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Patch stack before rebase"
+            echo '```'
+            git log --oneline "upstream/$UPSTREAM_REF..HEAD" || echo "(none)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          git log --format=%H "upstream/$UPSTREAM_REF..HEAD" > /tmp/before-stack.txt
+          echo "BEFORE_COUNT=$(wc -l < /tmp/before-stack.txt)" >> "$GITHUB_ENV"
+
+      - name: Rebase onto upstream
+        id: rebase
+        env:
+          UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        run: |
+          set -euo pipefail
+          if git rebase "upstream/$UPSTREAM_REF"; then
+            echo "Rebase clean."
+            exit 0
+          fi
+          echo "::error::Rebase hit conflicts that rerere could not resolve."
+          {
+            echo "### Conflicts"
+            echo '```'
+            git diff --name-only --diff-filter=U
+            echo '```'
+            echo "Resolve locally:"
+            echo '```'
+            echo "git fetch upstream && git rebase upstream/$UPSTREAM_REF master"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          git rebase --abort
+          exit 1
+
+      - name: Verify the fork delta survived
+        env:
+          UPSTREAM_REF: ${{ inputs.upstream_ref }}
+        run: |
+          set -euo pipefail
+          fail=0
+
+          # 1. The OTA redirect. If a conflict resolution reverted this, every device
+          #    built from the result would silently poll upstream again.
+          # sed, not grep -oP: PCRE needs a UTF-8 locale and some greps lack it.
+          actual=$(sed -n 's/^const String RELEASE_URL = "\([^"]*\)".*/\1/p' \
+            src/display/plugins/WebUIPlugin.h)
+          if [[ "$actual" != "$EXPECTED_RELEASE_URL" ]]; then
+            echo "::error::RELEASE_URL is '$actual', expected '$EXPECTED_RELEASE_URL'"
+            fail=1
+          fi
+
+          # 2. The CI upload guard, without which the release jobs never run.
+          if ! grep -q 'UPDATE_SERVER_HOST:-' .github/actions/upload-firmware/action.yml; then
+            echo "::error::upload-firmware secret guard is missing"
+            fail=1
+          fi
+
+          # 3. Nothing half-merged.
+          if git grep -qIn -e '^<<<<<<< ' -e '^>>>>>>> ' -- . ; then
+            echo "::error::conflict markers present in the tree"
+            fail=1
+          fi
+
+          after_count=$(git log --format=%H "upstream/$UPSTREAM_REF..HEAD" | wc -l)
+          echo "Patch stack: $BEFORE_COUNT before, $after_count after."
+          if (( after_count < BEFORE_COUNT )); then
+            echo "::warning::$(( BEFORE_COUNT - after_count )) commit(s) dropped, \
+          normally because upstream merged equivalent changes. Review the stack below."
+          fi
+
+          {
+            echo "### Patch stack after rebase"
+            echo '```'
+            git log --oneline "upstream/$UPSTREAM_REF..HEAD" || echo "(none)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit $fail
+
+      - name: Push
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${{ secrets.SYNC_TOKEN }}" ]]; then
+            echo "::error::SYNC_TOKEN is not set. See the header of this workflow."
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" == "$BEFORE_SHA" ]]; then
+            echo "Already up to date with upstream; nothing to push."
+            exit 0
+          fi
+          # Refuses if origin/master moved since checkout.
+          git push --force-with-lease=master:"$BEFORE_SHA" origin master
+          echo "Pushed. This fires build-nightly and force-updates the nightly release."
+
+      - name: Dry run notice
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "::notice::Dry run: rebase verified, nothing pushed."
