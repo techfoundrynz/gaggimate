@@ -1,4 +1,5 @@
 #include "DefaultUI.h"
+#include "PressFeedback.h"
 #include "StartupFade.h"
 
 #include <WiFi.h>
@@ -273,6 +274,7 @@ void DefaultUI::loop() {
     }
 
     ui_tick();
+    installPressFeedback(lv_scr_act());
 #ifndef GAGGIMATE_SIM
     updateEncoderControls();
 #endif
