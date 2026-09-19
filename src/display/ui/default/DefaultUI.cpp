@@ -1,4 +1,5 @@
 #include "DefaultUI.h"
+#include "PressFeedback.h"
 #include "StartupFade.h"
 
 #include <WiFi.h>
@@ -426,6 +427,7 @@ void DefaultUI::loop() {
                 lv_obj_set_style_img_opa(icon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
+    installPressFeedback(lv_scr_act());
 #ifndef GAGGIMATE_SIM
     updateEncoderControls();
 #endif
