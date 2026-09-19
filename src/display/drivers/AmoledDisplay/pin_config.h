@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <display/drivers/common/Encoder.h>
+
 struct AmoledHwConfig {
     int8_t lcd_sdio0;
     int8_t lcd_sdio1;
@@ -25,6 +28,38 @@ struct AmoledHwConfig {
     int8_t pcf8563_int;
     int8_t rotation_175;
     bool mirror_touch;
+    uint32_t spi_hz = 80000000;
+    EncoderConfig encoder;
+};
+
+// VIEWE UEDX46460015-MD50ET, 1.5-inch CO5300 + CST820 knob display.
+constexpr AmoledHwConfig VIEWE_1_5_HW_CONFIG{
+    .lcd_sdio0 = 13,
+    .lcd_sdio1 = 11,
+    .lcd_sdio2 = 14,
+    .lcd_sdio3 = 9,
+    .lcd_sclk = 10,
+    .lcd_cs = 12,
+    .lcd_rst = 8,
+    .lcd_width = 466,
+    .lcd_height = 466,
+    .lcd_gram_offset_x = 6,
+    .lcd_gram_offset_y = 0,
+    .lcd_en = 17,
+    .i2c_sda = 1,
+    .i2c_scl = 3,
+    .tp_int = 4,
+    .tp_rst = 2,
+    .battery_voltage_adc_data = -1,
+    .sd_cs = -1,
+    .sd_mosi = -1,
+    .sd_miso = -1,
+    .sd_sclk = -1,
+    .pcf8563_int = -1,
+    .rotation_175 = 0,
+    .mirror_touch = false,
+    .spi_hz = 40000000,
+    .encoder = {.pinA = 6, .pinB = 5, .buttonPin = 0, .stepsPerDetent = 2, .direction = 1},
 };
 
 constexpr AmoledHwConfig LILYGO_T_DISPLAY_S3_DS_HW_CONFIG{
