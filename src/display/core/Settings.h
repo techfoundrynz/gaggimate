@@ -91,6 +91,7 @@ class Settings {
     float getHardwareScaleActiveAlpha() const { return hardwareScaleActiveAlpha.get(); }
     String getPreferredScaleSource() const { return preferredScaleSource.get(); }
     double getTargetGrindVolume() const { return targetGrindVolume.get(); }
+    bool isGrindTargetFromDose() const { return grindTargetFromDose.get(); }
     int getTargetGrindDuration() const { return targetGrindDuration.get(); }
     int getStartupMode() const { return startupMode.get(); }
     int getStandbyTimeout() const { return standbyTimeout.get(); }
@@ -117,6 +118,8 @@ class Settings {
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
     bool isMahlkonigActive() const { return mahlkonigActive.get(); }
     String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }
+    bool isSetteActive() const { return setteActive.get(); }
+    String getSetteAddress() const { return setteAddress.get(); }
     int getSmartGrindMode() const { return smartGrindMode.get(); }
     String getSmartGrindIp() const { return smartGrindIp.get(); }
     bool isHomeAssistant() const { return homeAssistant.get(); }
@@ -205,6 +208,7 @@ class Settings {
     void setHardwareScaleConfiguration(uint16_t sample_rate_sps, float idle_alpha, float active_alpha);
     void setPreferredScaleSource(const String &scaleSource);
     void setTargetGrindVolume(double target_grind_volume);
+    void setGrindTargetFromDose(bool grind_target_from_dose);
     void setTargetGrindDuration(int target_duration);
     void setStartupMode(int startup_mode);
     void setStandbyTimeout(int standby_timeout);
@@ -231,6 +235,8 @@ class Settings {
     void setSmartGrindActive(bool smart_grind_active);
     void setMahlkonigActive(bool mahlkonig_active);
     void setMahlkonigRecipeProfiles(String profiles);
+    void setSetteActive(bool sette_active);
+    void setSetteAddress(String address);
     void setSmartGrindIp(String smart_grind_ip);
     void setSmartGrindMode(int smart_grind_mode);
     void setHomeAssistant(bool homeAssistant);
@@ -318,6 +324,7 @@ class Settings {
     Property<float> hardwareScaleActiveAlpha{registry, "hs_aa", DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA};
     Property<String> preferredScaleSource{registry, "pss", "auto"};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
+    Property<bool> grindTargetFromDose{registry, "tg_pd", false}; // selecting a profile sets the grind target to its dose
     Property<int> targetGrindDuration{registry, "tgd", 25000};
     Property<double> brewDelay{registry, "del_br", 800.0};
     Property<double> grindDelay{registry, "del_gd", 1000.0};
@@ -344,6 +351,8 @@ class Settings {
     Property<String> smartGrindIp{registry, "sg_i", ""};
     Property<bool> mahlkonigActive{registry, "mk_a", false};
     Property<String> mahlkonigRecipeProfiles{registry, "mk_rp", ""}; // profile id per grinder recipe slot, "r1,r2,..."
+    Property<bool> setteActive{registry, "st_a", false};
+    Property<String> setteAddress{registry, "st_ad", ""}; // BLE address of the Sette 270Wi
     Property<bool> homeAssistant{registry, "ha_a", false};
     Property<String> homeAssistantUser{registry, "ha_u", ""};
     Property<String> homeAssistantPassword{registry, "ha_pw", ""};

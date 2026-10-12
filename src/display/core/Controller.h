@@ -208,6 +208,7 @@ class Controller {
     void handleFlushButton(bool pressed);
     void handleProfileButton(bool pressed, const String &id);
     void handleProfileUpdate();
+    void applyProfileDoseToGrindTarget();
 
     // Private Attributes
 #ifndef GAGGIMATE_HEADLESS

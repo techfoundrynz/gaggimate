@@ -395,6 +395,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMahlkonigActive(parseBoolArg(request->arg("mahlkonigActive")));
             if (request->hasArg("mahlkonigRecipeProfiles"))
                 settings->setMahlkonigRecipeProfiles(request->arg("mahlkonigRecipeProfiles"));
+            if (request->hasArg("grindTargetFromDose"))
+                settings->setGrindTargetFromDose(parseBoolArg(request->arg("grindTargetFromDose")));
+            if (request->hasArg("setteActive"))
+                settings->setSetteActive(parseBoolArg(request->arg("setteActive")));
             if (request->hasArg("homeAssistant"))
                 settings->setHomeAssistant(parseBoolArg(request->arg("homeAssistant")));
             if (request->hasArg("haUser"))
@@ -584,6 +588,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["mahlkonigActive"] = settings.isMahlkonigActive();
     doc["mahlkonigRecipeProfiles"] = settings.getMahlkonigRecipeProfiles();
+    doc["grindTargetFromDose"] = settings.isGrindTargetFromDose();
+    doc["setteActive"] = settings.isSetteActive();
     doc["deviceIp"] = apMode ? WIFI_AP_IP.toString() : WiFi.localIP().toString(); // read-only, for plugin setup hints
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["flushDuration"] = settings.getFlushDuration();

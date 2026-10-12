@@ -237,6 +237,18 @@ export function GeneralTab({
           </div>
         </div>
 
+        {/* Grind */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>Grind</h3>
+          <ToggleField
+            label='Grind target follows profile dose'
+            htmlFor='grindTargetFromDose'
+            checked={!!formData.grindTargetFromDose}
+            onChange={onChange('grindTargetFromDose')}
+            helpText='Selecting a profile sets the grind target weight to its dose. Profiles without a dose leave the target unchanged.'
+          />
+        </div>
+
         {/* Flush */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
           <h3 className='text-md text-base-content mb-2 font-semibold'>
