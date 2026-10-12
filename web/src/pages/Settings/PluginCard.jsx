@@ -4,7 +4,8 @@ import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 import { computed } from '@preact/signals';
 import { machine, ApiServiceContext } from '../../services/ApiService.js';
-import { useContext, useEffect, useState } from 'preact/hooks';
+import { Fragment } from 'preact';
+import { useCallback, useContext, useEffect, useState } from 'preact/hooks';
 
 const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 
@@ -73,6 +74,306 @@ function MahlkonigRecipeProfiles({ formData, onChange }) {
         The profile's dose is saved to the shot history.
       </p>
     </div>
+  );
+}
+
+const SETTE_STATUS_POLL_MS = 2000;
+
+const SETTE_STATUS_LABELS = {
+  preparing: 'Grinding',
+  completed: 'Grind completed',
+  cancelled: 'Grind cancelled',
+  failed: 'Grind failed',
+  ended: 'Grind ended',
+};
+
+const formatAgo = ms => {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+};
+
+const SETTE_DEBUG_ACTIONS = [
+  { action: 'reconnect', label: 'Reconnect now' },
+  { action: 'resend-target', label: 'Resend target' },
+  { action: 'simulate-grind', label: 'Simulate grind' },
+  { action: 'clear-dose', label: 'Clear pending dose' },
+  { action: 'clear-log', label: 'Clear log' },
+];
+
+// Link internals and an event log, polled only while the panel is open
+function SetteDebug() {
+  const apiService = useContext(ApiServiceContext);
+  const [open, setOpen] = useState(false);
+  const [debug, setDebug] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const poll = useCallback(
+    () =>
+      apiService
+        .request({ tp: 'req:sette:debug' })
+        .then(setDebug)
+        .catch(() => setDebug(null)),
+    [apiService],
+  );
+
+  useEffect(() => {
+    if (!open) return undefined;
+    poll();
+    const timer = setInterval(poll, SETTE_STATUS_POLL_MS);
+    return () => clearInterval(timer);
+  }, [open, poll]);
+
+  const runAction = action =>
+    apiService
+      .request({ tp: 'req:sette:debug-action', action })
+      .then(() => setTimeout(poll, 300))
+      .catch(() => {});
+
+  const logText = debug
+    ? debug.log
+        .map(e => `-${formatAgo(e.ago).padStart(7)}  ${e.text}`)
+        .reverse()
+        .join('\n')
+    : '';
+
+  const copy = () => {
+    const report = `${JSON.stringify({ ...debug, log: undefined }, null, 2)}\n\n${logText}`;
+    navigator.clipboard?.writeText(report).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
+  const rows = debug && [
+    ['Controller link', debug.controllerLinked ? 'up' : 'down (grinder link paused)'],
+    ['BLE connections', `${debug.bleClients} / ${debug.bleMaxClients}`],
+    [
+      'Grinder link',
+      debug.connected
+        ? `connected ${formatAgo(debug.connectedFor)}, RSSI ${debug.rssi} dBm`
+        : debug.nextConnectIn > 0
+          ? `next attempt in ${formatAgo(debug.nextConnectIn)}`
+          : 'connecting…',
+    ],
+    ['Characteristic', debug.characteristic || '—'],
+    ['Connect attempts', `${debug.connectAttempts} (${debug.connectFailures} failed)`],
+    ['Frames sent', `${debug.txFrames} (${debug.txFailures} failed)`],
+    [
+      'Frames received',
+      `${debug.rxFrames} (${debug.rxChecksumErrors} bad checksum)${
+        debug.lastRxAgo > 0 ? `, last ${formatAgo(debug.lastRxAgo)} ago` : ''
+      }`,
+    ],
+    ['Live weight', `${debug.liveWeight.toFixed(1)} g${debug.cycleActive ? ' (grinding)' : ''}`],
+    ['Target', `${debug.desiredTarget.toFixed(1)} g wanted, ${debug.sentTarget.toFixed(1)} g sent`],
+    [
+      'Pending dose',
+      debug.pendingDose > 0
+        ? `${debug.pendingDose.toFixed(1)} g, ${formatAgo(debug.pendingDoseAge)} old`
+        : 'none',
+    ],
+    ['Display uptime', formatAgo(debug.uptime)],
+  ];
+
+  return (
+    <details onToggle={e => setOpen(e.currentTarget.open)}>
+      <summary className='cursor-pointer text-sm opacity-70'>Debug</summary>
+      {open && !debug && <div className='mt-2 text-sm opacity-70'>Loading…</div>}
+      {open && debug && (
+        <div className='mt-2 space-y-3'>
+          <div className='grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm'>
+            {rows.map(([label, value]) => (
+              <Fragment key={label}>
+                <span className='opacity-70'>{label}</span>
+                <span className='font-mono break-all'>{value}</span>
+              </Fragment>
+            ))}
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {SETTE_DEBUG_ACTIONS.map(({ action, label }) => (
+              <button
+                key={action}
+                type='button'
+                className='btn btn-xs btn-outline'
+                onClick={() => runAction(action)}
+              >
+                {label}
+              </button>
+            ))}
+            <button type='button' className='btn btn-xs btn-outline' onClick={copy}>
+              {copied ? 'Copied' : 'Copy report'}
+            </button>
+          </div>
+          <p className='text-xs opacity-70'>
+            Simulate grind makes the next shot take the grind target as its dose, as if the grinder
+            had just finished.
+          </p>
+          <pre className='bg-base-300 max-h-64 overflow-auto rounded p-2 text-xs'>
+            {logText || 'No events yet.'}
+          </pre>
+        </div>
+      )}
+    </details>
+  );
+}
+
+// The plugin finds and remembers the nearest grinder by itself; this shows the link and lets you pick another one.
+function SetteGrinder() {
+  const apiService = useContext(ApiServiceContext);
+  const [status, setStatus] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [manualAddress, setManualAddress] = useState('');
+  const [manualError, setManualError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () =>
+      apiService
+        .request({ tp: 'req:sette:status' })
+        .then(res => !cancelled && setStatus(res))
+        .catch(() => !cancelled && setStatus(null));
+    poll();
+    const timer = setInterval(poll, SETTE_STATUS_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [apiService]);
+
+  const scan = () => {
+    setScanned(true);
+    setStatus(s => ({ ...s, scanning: true, found: [] }));
+    apiService.request({ tp: 'req:sette:scan' }).catch(() => {});
+  };
+  const chooseAddress = address =>
+    apiService
+      .request({ tp: 'req:sette:set-address', address })
+      .then(res => {
+        if (!res.ok) {
+          setManualError(true);
+          return;
+        }
+        setManualError(false);
+        setScanned(false);
+        setManualAddress('');
+        setStatus(s => ({ ...s, address, connected: false }));
+      })
+      .catch(() => {});
+
+  if (!status) {
+    return (
+      <div className='text-sm opacity-70'>
+        Save and restart to start the grinder link. GaggiMate then finds your grinder by itself:
+        press a button on the grinder to wake it.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className='text-sm'>
+        {status.address ? (
+          <>
+            <div>
+              <span className='font-medium'>Grinder:</span>{' '}
+              <span className='font-mono'>{status.address}</span>
+              {' · '}
+              {status.connected ? 'Connected' : 'Not connected'}
+              {status.connected && status.target > 0 && `, target ${status.target.toFixed(1)} g`}
+            </div>
+            {!status.connected && (
+              <div className='opacity-70'>
+                Press a button on the grinder to wake it; GaggiMate reconnects within 20 seconds.
+              </div>
+            )}
+          </>
+        ) : (
+          <div>
+            <span className='font-medium'>Searching for your grinder…</span>{' '}
+            <span className='opacity-70'>Press a button on the grinder to wake it.</span>
+          </div>
+        )}
+        {status.lastStatus !== 'none' && (
+          <div className='opacity-70'>
+            <span className='font-medium'>Last grind:</span>{' '}
+            {SETTE_STATUS_LABELS[status.lastStatus] || status.lastStatus}
+            {status.lastGrindWeight > 0 && ` (${status.lastGrindWeight.toFixed(1)} g)`}
+            {status.pendingDose > 0 && ', used as the next shot’s dose'}
+          </div>
+        )}
+      </div>
+
+      <div className='flex flex-wrap gap-2'>
+        <button
+          type='button'
+          className='btn btn-sm btn-secondary'
+          onClick={scan}
+          disabled={status.scanning}
+        >
+          {status.scanning ? 'Scanning…' : 'Scan'}
+        </button>
+        {status.address && (
+          <button
+            type='button'
+            className='btn btn-sm btn-outline'
+            onClick={() => chooseAddress('')}
+          >
+            Forget
+          </button>
+        )}
+      </div>
+
+      {scanned && !status.scanning && (
+        <div className='space-y-2'>
+          {status.found?.length > 0 ? (
+            <div className='flex flex-wrap gap-2'>
+              {status.found.map(g => (
+                <button
+                  key={g.address}
+                  type='button'
+                  className='btn btn-sm btn-outline'
+                  onClick={() => chooseAddress(g.address)}
+                  disabled={g.address === status.address}
+                >
+                  {g.name} <span className='font-mono opacity-70'>{g.address}</span>
+                  {g.address === status.address && ' (current)'}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className='text-sm opacity-70'>
+              No grinders found. Press a button on the grinder to wake it, then scan again.
+            </div>
+          )}
+        </div>
+      )}
+
+      <details>
+        <summary className='cursor-pointer text-sm opacity-70'>Enter an address manually</summary>
+        <div className='mt-2 flex gap-2'>
+          <input
+            type='text'
+            aria-label='Grinder Bluetooth address'
+            className={`input input-bordered input-sm w-full font-mono ${manualError ? 'input-error' : ''}`}
+            placeholder='aa:bb:cc:dd:ee:ff'
+            value={manualAddress}
+            onInput={e => setManualAddress(e.currentTarget.value.trim())}
+          />
+          <button
+            type='button'
+            className='btn btn-sm'
+            onClick={() => chooseAddress(manualAddress)}
+            disabled={!manualAddress}
+          >
+            Use
+          </button>
+        </div>
+      </details>
+
+      <SetteDebug />
+    </>
   );
 }
 
@@ -389,6 +690,34 @@ export function PluginCard({
               company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of
               their respective owners.
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Baratza Sette 270Wi</span>
+          <input
+            id='setteActive'
+            name='setteActive'
+            value='setteActive'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.setteActive}
+            onChange={onChange('setteActive')}
+            aria-label='Enable Baratza Sette 270Wi'
+          />
+        </div>
+        {formData.setteActive && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              Connects to a Sette 270Wi running the grind-events firmware over Bluetooth. The
+              grinder's target follows GaggiMate's grind target (turn on "Grind target follows
+              profile dose" under General to set it from profiles), and the weight of each completed
+              grind becomes the dose of the next shot, so ratio targets follow what you actually
+              ground. Saved profiles are never changed. Save and restart to apply.
+            </p>
+            <SetteGrinder />
           </div>
         )}
       </div>
