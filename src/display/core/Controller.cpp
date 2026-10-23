@@ -32,6 +32,7 @@
 #include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/WifiStaWatchdogPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#include <display/plugins/sette/SettePlugin.h>
 #endif
 #include <display/util/PsramAllocator.h>
 #ifndef GAGGIMATE_HEADLESS
@@ -112,6 +113,9 @@ void Controller::setup() {
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
     pluginManager->registerPlugin(new ImprovPlugin());
+    if (settings.isSetteActive()) {
+        pluginManager->registerPlugin(new SettePlugin());
+    }
 #endif
     pluginManager->registerPlugin(&ShotHistory);
 #ifndef GAGGIMATE_SIM
@@ -129,7 +133,10 @@ void Controller::setup() {
         }
     });
 
-    pluginManager->on("profiles:profile:select", [this](Event const &event) { this->handleProfileUpdate(); });
+    pluginManager->on("profiles:profile:select", [this](Event const &event) {
+        this->handleProfileUpdate();
+        this->applyProfileDoseToGrindTarget();
+    });
 
     buttons.setCallback([this](uint8_t index, ButtonHandler::Event event) { onButtonEvent(index, event); });
 
@@ -1774,6 +1781,18 @@ void Controller::handleProfileButton(bool pressed, const String &id) {
         profileManager->selectProfile(id);
         activate();
     }
+}
+
+// Opt-in: the grind target follows the selected profile's dose, for any grinder GaggiMate drives
+void Controller::applyProfileDoseToGrindTarget() {
+    if (!settings.isGrindTargetFromDose())
+        return;
+    const float dose = profileManager->getSelectedProfile().dose;
+    if (dose < BREW_MIN_VOLUMETRIC || dose > BREW_MAX_VOLUMETRIC)
+        return;
+    if (std::fabs(dose - settings.getTargetGrindVolume()) < 0.05)
+        return;
+    setTargetGrindVolume(dose);
 }
 
 void Controller::handleProfileUpdate() {

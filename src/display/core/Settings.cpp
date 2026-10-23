@@ -125,6 +125,8 @@ void Settings::setPreferredScaleSource(const String &scaleSource) {
 
 void Settings::setTargetGrindVolume(double target_grind_volume) { targetGrindVolume.set(target_grind_volume); }
 
+void Settings::setGrindTargetFromDose(bool grind_target_from_dose) { grindTargetFromDose.set(grind_target_from_dose); }
+
 void Settings::setTargetGrindDuration(const int target_duration) { targetGrindDuration.set(target_duration); }
 
 void Settings::setBrewDelay(double brew_Delay) { brewDelay.set(std::clamp(brew_Delay, 0.0, 4000.0)); }
@@ -178,6 +180,10 @@ void Settings::setSmartGrindActive(bool smart_grind_active) { smartGrindActive.s
 void Settings::setMahlkonigActive(bool mahlkonig_active) { mahlkonigActive.set(mahlkonig_active); }
 
 void Settings::setMahlkonigRecipeProfiles(String profiles) { mahlkonigRecipeProfiles.set(profiles); }
+
+void Settings::setSetteActive(bool sette_active) { setteActive.set(sette_active); }
+
+void Settings::setSetteAddress(String address) { setteAddress.set(address); }
 
 void Settings::setSmartGrindIp(String smart_grind_ip) { smartGrindIp.set(smart_grind_ip); }
 

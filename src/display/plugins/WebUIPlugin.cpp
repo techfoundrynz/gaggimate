@@ -80,9 +80,15 @@ void WebUIPlugin::loop() {
         // Pass which component is being flashed: a controller update streams the
         // firmware over BLE (wants a low-latency link), a display update is over
         // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
-        pluginManager->trigger("ota:update:start", "component", updateComponent);
-        ota->update(updateComponent != "display", updateComponent != "controller",
-                    controller->getClientController()->getClient());
+        const Event start = pluginManager->trigger("ota:update:start", "component", updateComponent);
+        if (start.getInt("blocked") != 0) {
+            // An accessory could not release the radio. Fail before starting the transfer and run end cleanup below.
+            pluginManager->trigger("ota:update:phase", "phase", PHASE_FAILED);
+            updateOTAProgress(PHASE_FAILED, 0);
+        } else {
+            ota->update(updateComponent != "display", updateComponent != "controller",
+                        controller->getClientController()->getClient());
+        }
         pluginManager->trigger("ota:update:end");
         updating = false;
     }
@@ -395,6 +401,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMahlkonigActive(parseBoolArg(request->arg("mahlkonigActive")));
             if (request->hasArg("mahlkonigRecipeProfiles"))
                 settings->setMahlkonigRecipeProfiles(request->arg("mahlkonigRecipeProfiles"));
+            if (request->hasArg("grindTargetFromDose"))
+                settings->setGrindTargetFromDose(parseBoolArg(request->arg("grindTargetFromDose")));
+            if (request->hasArg("setteActive"))
+                settings->setSetteActive(parseBoolArg(request->arg("setteActive")));
             if (request->hasArg("homeAssistant"))
                 settings->setHomeAssistant(parseBoolArg(request->arg("homeAssistant")));
             if (request->hasArg("haUser"))
@@ -584,6 +594,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["mahlkonigActive"] = settings.isMahlkonigActive();
     doc["mahlkonigRecipeProfiles"] = settings.getMahlkonigRecipeProfiles();
+    doc["grindTargetFromDose"] = settings.isGrindTargetFromDose();
+    doc["setteActive"] = settings.isSetteActive();
     doc["deviceIp"] = apMode ? WIFI_AP_IP.toString() : WiFi.localIP().toString(); // read-only, for plugin setup hints
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["flushDuration"] = settings.getFlushDuration();

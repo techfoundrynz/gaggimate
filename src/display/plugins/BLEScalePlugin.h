@@ -24,6 +24,8 @@ class BLEScalePlugin : public Plugin {
     void connect(const std::string &uuid);
     void scan();
     void forget();
+    // A NimBLE connect by another plugin stops any running scan behind the scanner's back; this restarts it
+    void resumeScan() { resumeRequested = true; }
     void disconnect();
     void onMeasurement(float value);
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
@@ -81,6 +83,7 @@ class BLEScalePlugin : public Plugin {
 
     std::atomic<bool> scanRequested{false};   // set by scan() from any task, consumed in loop()
     std::atomic<bool> forgetRequested{false}; // set by forget() from any task, consumed in loop()
+    std::atomic<bool> resumeRequested{false}; // set by resumeScan() from any task, consumed in loop()
     bool scanWindowOpen = false;
     unsigned long scanDeadline = 0;
     unsigned long scanRunningSince = 0; // 0 = scanner not running

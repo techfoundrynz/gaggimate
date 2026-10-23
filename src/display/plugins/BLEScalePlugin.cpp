@@ -141,6 +141,9 @@ void BLEScalePlugin::loop() {
             scanner->stopAsyncScan();
         }
     }
+    if (resumeRequested.exchange(false) && active && scanner != nullptr && scanner->isScanRunning()) {
+        scanner->restartAsyncScan();
+    }
     const unsigned long now = millis();
     if (scanRequested.exchange(false)) {
         // No running scan (scale connected, scanner missing) closes the window right away.
