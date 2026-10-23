@@ -60,6 +60,9 @@ class SettePlugin : public Plugin {
     unsigned long lastHeartbeatAt = 0;
     sette::Decoder decoder; // fed only from the NimBLE host task
 
+    // OTA start waits for the worker to finish any BLE operation and disconnect before proceeding.
+    std::atomic<bool> updating{false};
+    std::atomic<bool> otaPaused{false};
     std::atomic<bool> controllerLinked{false};
     std::atomic<bool> scanRequested{false};
     std::atomic<bool> addressRequested{false};

@@ -80,9 +80,15 @@ void WebUIPlugin::loop() {
         // Pass which component is being flashed: a controller update streams the
         // firmware over BLE (wants a low-latency link), a display update is over
         // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
-        pluginManager->trigger("ota:update:start", "component", updateComponent);
-        ota->update(updateComponent != "display", updateComponent != "controller",
-                    controller->getClientController()->getClient());
+        const Event start = pluginManager->trigger("ota:update:start", "component", updateComponent);
+        if (start.getInt("blocked") != 0) {
+            // An accessory could not release the radio. Fail before starting the transfer and run end cleanup below.
+            pluginManager->trigger("ota:update:phase", "phase", PHASE_FAILED);
+            updateOTAProgress(PHASE_FAILED, 0);
+        } else {
+            ota->update(updateComponent != "display", updateComponent != "controller",
+                        controller->getClientController()->getClient());
+        }
         pluginManager->trigger("ota:update:end");
         updating = false;
     }

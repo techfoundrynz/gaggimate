@@ -18,6 +18,7 @@ constexpr unsigned long RETRY_MS = 20000;
 constexpr unsigned long HEARTBEAT_MS = 2500;
 constexpr unsigned long TASK_INTERVAL_MS = 50;
 constexpr uint32_t SCAN_SECONDS = 5;
+constexpr unsigned long OTA_PAUSE_TIMEOUT_MS = 15000;
 // A grind older than this belongs to a shot that never happened
 constexpr unsigned long DOSE_VALID_MS = 15 * 60 * 1000;
 // Weights outside this range are not a dose (cup removed, scale glitch)
@@ -41,6 +42,23 @@ void SettePlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     pluginManager->on("webui:ws:register",
                       [this](Event const &event) { registerWsHandlers(event.getPointer<WebSocketHandler>("ws")); });
 
+    pluginManager->on("ota:update:start", [this](Event &event) {
+        otaPaused = false; // a retry needs a fresh acknowledgement, even if the worker has not resumed yet
+        updating = true;
+        const unsigned long startedAt = millis();
+        // The worker owns the BLE client. Wait for its current scan/connect/write and the disconnect to finish;
+        // setting a flag alone would let OTA race a scan or connect already in progress.
+        while (taskHandle != nullptr && !otaPaused) {
+            if (millis() - startedAt >= OTA_PAUSE_TIMEOUT_MS) {
+                log("Could not pause grinder; firmware update cancelled");
+                event.setInt("blocked", 1);
+                return;
+            }
+            vTaskDelay(pdMS_TO_TICKS(TASK_INTERVAL_MS));
+        }
+    });
+    pluginManager->on("ota:update:end", [this](Event const &) { updating = false; });
+
     setTarget(static_cast<float>(controller->getSettings().getTargetGrindVolume()));
     xTaskCreatePinnedToCore(taskEntry, "SettePlugin", 6144, this, 1, &taskHandle, 0);
 }
@@ -49,6 +67,33 @@ void SettePlugin::taskEntry(void *arg) { static_cast<SettePlugin *>(arg)->run();
 
 void SettePlugin::run() {
     for (;;) {
+        if (updating) {
+            if (!otaPaused) {
+                disconnect();
+                // NimBLE disconnect is asynchronous. Keep the grinder off the radio before acknowledging the pause.
+                while (updating && client != nullptr && client->isConnected()) {
+                    vTaskDelay(pdMS_TO_TICKS(TASK_INTERVAL_MS));
+                }
+                if (!updating) {
+                    continue; // preparation timed out; OTA was cancelled
+                }
+                {
+                    std::lock_guard<std::mutex> lock(mutex);
+                    connected = false;
+                    cycleActive = false;
+                    scanning = false;
+                    logLocked("Grinder paused for firmware update");
+                }
+                otaPaused = true;
+            }
+            vTaskDelay(pdMS_TO_TICKS(TASK_INTERVAL_MS));
+            continue;
+        }
+        if (otaPaused.exchange(false)) {
+            log("Firmware update ended; resuming grinder link");
+            nextConnectAt = millis();
+            BLEScales.resumeScan(); // an in-flight grinder scan/connect may have stopped it before the pause
+        }
         if (scanRequested.exchange(false)) {
             scanForGrinders();
         }
@@ -136,6 +181,9 @@ void SettePlugin::run() {
 }
 
 bool SettePlugin::connect() {
+    if (updating) {
+        return false;
+    }
     {
         std::lock_guard<std::mutex> lock(mutex);
         connectAttempts++;
@@ -150,8 +198,11 @@ bool SettePlugin::connect() {
     }
     const bool scanWasRunning = NimBLEDevice::getScan()->isScanning();
     const bool ok = client->connect(NimBLEAddress(address));
-    if (scanWasRunning) {
+    if (scanWasRunning && !updating) {
         BLEScales.resumeScan();
+    }
+    if (updating) {
+        return false;
     }
     if (!ok) {
         log("Grinder %s not reachable", address.c_str());
@@ -211,8 +262,9 @@ void SettePlugin::disconnect() {
 }
 
 bool SettePlugin::write(const std::vector<uint8_t> &frame) {
-    if (characteristic == nullptr)
+    if (updating || characteristic == nullptr) {
         return false;
+    }
     const bool ok = characteristic->writeValue(frame.data(), frame.size(), !characteristic->canWriteNoResponse());
     std::lock_guard<std::mutex> lock(mutex);
     if (ok) {
@@ -230,7 +282,7 @@ std::string SettePlugin::scanForGrinders() {
         scanning = true;
     }
     std::vector<FoundGrinder> results;
-    if (controllerLinked) {
+    if (controllerLinked && !updating) {
         NimBLEScan *scan = NimBLEDevice::getScan();
         const bool scanWasRunning = scan->isScanning();
         scan->stop();
@@ -247,7 +299,7 @@ std::string SettePlugin::scanForGrinders() {
         std::sort(results.begin(), results.end(), [](const FoundGrinder &a, const FoundGrinder &b) { return a.rssi > b.rssi; });
         scan->clearResults();
         scan->setMaxResults(0);
-        if (scanWasRunning) {
+        if (scanWasRunning && !updating) {
             BLEScales.resumeScan();
         }
         log("Scan found %d grinder(s)", static_cast<int>(results.size()));
@@ -262,6 +314,9 @@ std::string SettePlugin::scanForGrinders() {
 }
 
 void SettePlugin::onNotify(const uint8_t *data, size_t len) {
+    if (updating) {
+        return;
+    }
     decoder.push(data, len, [this](const sette::Message &message) { onMessage(message); });
     rxFrames = decoder.frames;
     rxChecksumErrors = decoder.checksumErrors;
@@ -395,6 +450,7 @@ void SettePlugin::registerWsHandlers(WebSocketHandler *ws) {
         const unsigned long now = millis();
         resp["uptime"] = now;
         resp["controllerLinked"] = controllerLinked.load();
+        resp["otaPaused"] = otaPaused.load();
         resp["bleClients"] = NimBLEDevice::getClientListSize();
         resp["bleMaxClients"] = CONFIG_BT_NIMBLE_MAX_CONNECTIONS;
         resp["nextConnectIn"] = std::max(0L, static_cast<long>(nextConnectAt.load() - now));
