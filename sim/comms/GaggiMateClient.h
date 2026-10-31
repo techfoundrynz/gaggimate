@@ -90,6 +90,7 @@ class GaggiMateClient {
     LinkType getLinkType() const { return _connected ? LinkType::Ble : LinkType::None; }
     int getRssi() const { return _connected ? -50 : 0; }
     OtaSender *getOtaSender() { return nullptr; }
+    void sendConsoleSubscription(bool enabled);
 
     // build*: compose a command without sending.
     gm::Payload buildPing();
@@ -160,6 +161,11 @@ class GaggiMateClient {
     bool _pendingConnect = false;
     bool _autotunePending = false;
     uint32_t _autotuneDueMs = 0;
+    bool _consoleStreaming = false;
+    uint32_t _consoleRenewed = 0;
+    uint32_t _lastConsoleLog = 0;
+    uint32_t _consoleSequence = 0;
+    void emitConsoleLog(const char *text);
 
     ConnectionCallback _connCb;
     IncompatibleCallback _incompatibleCb;

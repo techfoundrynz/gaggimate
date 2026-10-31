@@ -64,6 +64,11 @@ msgstr "{0, plural, other {# 次萃取}}"
 msgid "{0} (skipped)"
 msgstr "{0}(已跳过)"
 
+#. placeholder {0}: entry.lost
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "{0} log records dropped before this entry."
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 个候选}}"
@@ -322,6 +327,10 @@ msgstr "所有可用指标均已显示。"
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available panels are visible."
 msgstr "所有可用面板均已显示。"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "All levels"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -631,6 +640,10 @@ msgstr "锅炉温度 {temperature} °C"
 msgid "Boiler Refill Plugin"
 msgstr "锅炉补水插件"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Both devices"
+msgstr ""
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
@@ -836,6 +849,10 @@ msgstr "选择同时存在硬件秤和蓝牙秤时优先使用的来源。"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Cleaning & Maintenance"
 msgstr "清洁与维护"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Clear"
+msgstr ""
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Clear date filter"
@@ -1070,6 +1087,14 @@ msgstr "控制列样式"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Connection"
 msgstr "控制器连接"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Controller"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Controller disconnected"
+msgstr ""
 
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
@@ -1480,6 +1505,10 @@ msgstr "详情"
 msgid "Detected board"
 msgstr "检测到的主板"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Device console"
+msgstr ""
+
 #: src/components/Navigation.jsx
 #: src/pages/Settings/index.jsx
 msgid "Device Settings"
@@ -1507,11 +1536,19 @@ msgstr "放弃"
 msgid "Disconnect"
 msgstr "断开连接"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Disconnected"
+msgstr ""
+
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Dismiss"
 msgstr "忽略"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Display Settings"
@@ -1569,6 +1606,10 @@ msgstr "出液量"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Dose Out (g)"
 msgstr "出液量 (g)"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Download logs"
+msgstr ""
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Download Support Data"
@@ -1744,6 +1785,10 @@ msgstr "启用待机显示"
 #: src/components/MachineProfileControl.jsx
 msgid "Enabled"
 msgstr "已启用"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Enable streaming to view device logs."
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Enables compact mode for this panel"
@@ -2612,6 +2657,10 @@ msgstr "上周"
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "上次：{lastTime} · {shotsSince, plural, other {此后 # 次萃取}}"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Latest 1,000 entries. Times are uptime on each device. Pause scrolling keeps streaming active."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
 msgstr "长度（长）"
@@ -2657,6 +2706,10 @@ msgstr "液体阻力 (bar·s/mL)"
 #: src/app/machines.js
 msgid "live connection failed ({reason})"
 msgstr "实时连接失败（{reason}）"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Live Console"
+msgstr ""
 
 #: src/components/OverviewChart.jsx
 msgid "Live Metrics"
@@ -2717,6 +2770,14 @@ msgstr "本地浏览器存储 (WEB)"
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
 msgstr "使用本地浏览器时间。"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Log level"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Log source"
+msgstr ""
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Longest Duration"
@@ -3479,6 +3540,14 @@ msgstr "暂停"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Pause replay"
 msgstr "暂停回放"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Pause scrolling"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Paused while tab is hidden"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
@@ -4382,6 +4451,11 @@ msgid "Resume replay"
 msgstr "继续回放"
 
 #: src/components/MachineProfileControl.jsx
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Resume scrolling"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 #: src/pages/SetupWizard/PluginsStep.jsx
@@ -5017,6 +5091,10 @@ msgstr "最多显示最近 100 条萃取记录。可使用筛选条件缩小范�
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "冲煮过程中秤短暂断开连接时显示。此时，即使秤之后重新连接，本次冲煮的停止检测也会忽略重量。"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Shows logs from both devices. Streaming stops when you leave this screen or hide this tab."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
 msgstr "根据流量提前停止过程，以补偿滴落或控制延迟。"
@@ -5342,6 +5420,10 @@ msgstr "停止回放并恢复图表"
 msgid "Stop when"
 msgstr "停止条件"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Stopped"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Stopped: Manually"
 msgstr "已停止：手动"
@@ -5373,6 +5455,14 @@ msgstr "将导入的外部萃取和曲线保存在此设备的此浏览器中。
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "强"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Stream device logs"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Streaming"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -6377,6 +6467,10 @@ msgstr "正在等待控制器配置…"
 #: src/utils/machineProfiles.js
 msgid "Waiting for your controller to identify its board. Please keep the machine connected."
 msgstr "正在等待控制器识别其主板。请保持咖啡机连接。"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Waiting for device logs…"
+msgstr ""
 
 #: src/utils/warnings.js
 msgctxt "warning level"
