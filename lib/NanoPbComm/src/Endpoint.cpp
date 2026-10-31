@@ -128,6 +128,22 @@ size_t Endpoint::frameLimit() const {
     return limit < BUFFER_SIZE ? limit : BUFFER_SIZE;
 }
 
+bool Endpoint::trySendDiagnostic(const gm::Payload &payload) {
+    if (!_mutex || xSemaphoreTakeRecursive(_mutex, 0) != pdTRUE)
+        return false;
+    bool sent = false;
+    if (_transport.isConnected() && _queue.empty() && !_inFlight) {
+        memset(&_txFrame, 0, sizeof(_txFrame));
+        _txFrame.payloads_count = 1;
+        _txFrame.payloads[0] = payload;
+        size_t length = 0;
+        if (encodeFrame(_txFrame, _unrelBuf, frameLimit(), &length))
+            sent = _transport.send(_unrelBuf, length);
+    }
+    unlock();
+    return sent;
+}
+
 bool Endpoint::encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize, size_t *outLen) {
     pb_ostream_t os = pb_ostream_from_buffer(buf, bufSize);
     if (!pb_encode(&os, &gaggimate_Frame_msg, &frame))
@@ -137,14 +153,13 @@ bool Endpoint::encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize,
 }
 
 void Endpoint::sendAck(uint32_t id) {
-    gm::Frame frame = gaggimate_Frame_init_zero;
-    frame.id = 0; // ACKs are never themselves acknowledged
-    frame.ack = id;
-    frame.payloads_count = 0;
+    // A pure ACK only has the ack varint: id=0 and an empty payload list are
+    // omitted by protobuf. Avoid putting the whole Frame (including six Payload
+    // unions) on the 4 KB NimBLE host stack for every received reliable packet.
     uint8_t buf[16];
-    size_t len = 0;
-    if (encodeFrame(frame, buf, sizeof(buf), &len))
-        _transport.send(buf, len);
+    pb_ostream_t stream = pb_ostream_from_buffer(buf, sizeof(buf));
+    if (pb_encode_tag(&stream, PB_WT_VARINT, gaggimate_Frame_ack_tag) && pb_encode_varint(&stream, id))
+        _transport.send(buf, stream.bytes_written);
 }
 
 // A fixed timeout shorter than the real round trip resends every frame that did arrive and overloads a slow link.

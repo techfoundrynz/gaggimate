@@ -45,6 +45,11 @@ IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
 - **WebUI**: open <http://localhost:8080/> while it runs (port 80 is remapped to
   8080 so it needs no root). Live status streams over the WebSocket just like on
   the device.
+  Set `GM_SIM_WEB_PORT=8081` when launching to use another port.
+- **Live console**: Settings → System → Live Console captures the display's
+  simulated ESP logs and adds labeled controller telemetry once a second while
+  subscribed. The controller logs are simulated; this exercises the console UI
+  and observer lifecycle, not BLE delivery or the ESP32 logging hooks.
 - **Screenshot mode** (renders briefly, writes a BMP, exits — handy for
   validation/CI):
 

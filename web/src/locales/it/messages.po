@@ -68,6 +68,11 @@ msgstr "{0, plural, one {# estrazione} other {# estrazioni}}"
 msgid "{0} (skipped)"
 msgstr "{0} (saltata)"
 
+#. placeholder {0}: entry.lost
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "{0} log records dropped before this entry."
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, one {# candidato} other {# candidati}}"
@@ -326,6 +331,10 @@ msgstr "Tutte le metriche disponibili sono visibili."
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available panels are visible."
 msgstr "Tutti i pannelli disponibili sono visibili."
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "All levels"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -635,6 +644,10 @@ msgstr "Caldaia a {temperature} °C"
 msgid "Boiler Refill Plugin"
 msgstr "Plugin di riempimento caldaia"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Both devices"
+msgstr ""
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
@@ -840,6 +853,10 @@ msgstr "Scegli quale sorgente preferire quando sono disponibili sia la bilancia 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Cleaning & Maintenance"
 msgstr "Pulizia e manutenzione"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Clear"
+msgstr ""
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Clear date filter"
@@ -1074,6 +1091,14 @@ msgstr "Stile colonna di controllo"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Connection"
 msgstr "Connessione controller"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Controller"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Controller disconnected"
+msgstr ""
 
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
@@ -1484,6 +1509,10 @@ msgstr "Dettagli"
 msgid "Detected board"
 msgstr "Scheda rilevata"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Device console"
+msgstr ""
+
 #: src/components/Navigation.jsx
 #: src/pages/Settings/index.jsx
 msgid "Device Settings"
@@ -1511,11 +1540,19 @@ msgstr "Scarta"
 msgid "Disconnect"
 msgstr "Disconnetti"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Disconnected"
+msgstr ""
+
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Dismiss"
 msgstr "Ignora"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Display Settings"
@@ -1573,6 +1610,10 @@ msgstr "Resa"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Dose Out (g)"
 msgstr "Resa (g)"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Download logs"
+msgstr ""
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Download Support Data"
@@ -1748,6 +1789,10 @@ msgstr "Attiva display in standby"
 #: src/components/MachineProfileControl.jsx
 msgid "Enabled"
 msgstr "Attivato"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Enable streaming to view device logs."
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Enables compact mode for this panel"
@@ -2616,6 +2661,10 @@ msgstr "Settimana scorsa"
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Ultima: {lastTime} · {shotsSince, plural, one {# estrazione fatta } other {# estrazioni fatte }}"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Latest 1,000 entries. Times are uptime on each device. Pause scrolling keeps streaming active."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
 msgstr "Durata (lunghi)"
@@ -2661,6 +2710,10 @@ msgstr "Resistenza del liquido (bar·s/mL)"
 #: src/app/machines.js
 msgid "live connection failed ({reason})"
 msgstr "connessione live non riuscita ({reason})"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Live Console"
+msgstr ""
 
 #: src/components/OverviewChart.jsx
 msgid "Live Metrics"
@@ -2721,6 +2774,14 @@ msgstr "Archivio locale del browser (WEB)"
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
 msgstr "Viene usata l'ora locale del browser."
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Log level"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Log source"
+msgstr ""
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Longest Duration"
@@ -3483,6 +3544,14 @@ msgstr "Pausa"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Pause replay"
 msgstr "Metti in pausa il replay"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Pause scrolling"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Paused while tab is hidden"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
@@ -4386,6 +4455,11 @@ msgid "Resume replay"
 msgstr "Riprendi replay"
 
 #: src/components/MachineProfileControl.jsx
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Resume scrolling"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 #: src/pages/SetupWizard/PluginsStep.jsx
@@ -5022,6 +5096,10 @@ msgstr "Vengono mostrate fino a 100 estrazioni più recenti. Affina con i filtri
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "Mostrato quando la bilancia perde brevemente la connessione durante l'erogazione. In questo caso il peso viene ignorato per il rilevamento dell'arresto di quell'erogazione, anche se la bilancia si riconnette in seguito."
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Shows logs from both devices. Streaming stops when you leave this screen or hide this tab."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
 msgstr "Interrompe il processo in anticipo in base alla portata, per compensare gocciolamenti o ritardi nel controllo."
@@ -5347,6 +5425,10 @@ msgstr "Interrompi il replay e ripristina il grafico"
 msgid "Stop when"
 msgstr "Arresta quando"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Stopped"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Stopped: Manually"
 msgstr "Arrestato: manualmente"
@@ -5378,6 +5460,14 @@ msgstr "Salva localmente in questo browser, su questo dispositivo, shot e profil
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "Forte"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Stream device logs"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Streaming"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -6390,6 +6480,10 @@ msgstr "In attesa della configurazione del controller…"
 #: src/utils/machineProfiles.js
 msgid "Waiting for your controller to identify its board. Please keep the machine connected."
 msgstr "In attesa che il controller identifichi la sua scheda. Tieni la macchina connessa."
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Waiting for device logs…"
+msgstr ""
 
 #: src/utils/warnings.js
 msgctxt "warning level"

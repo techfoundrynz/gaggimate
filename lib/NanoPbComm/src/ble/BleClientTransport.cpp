@@ -5,6 +5,23 @@
 static constexpr const char *NVS_NAMESPACE = "gmble";
 static constexpr const char *NVS_PEER_KEY = "peer";
 
+// NimBLE 1.x's client callback omits the disconnect reason. Observe GAP events
+// separately so field logs distinguish link timeouts from a peer/local terminate.
+static ble_gap_event_listener controllerGapListener{};
+
+static int logControllerGapEvent(ble_gap_event *event, void *context) {
+    if (event->type != BLE_GAP_EVENT_DISCONNECT)
+        return 0;
+    auto *transport = static_cast<BleClientTransport *>(context);
+    auto *client = transport->getNativeClient();
+    const auto &connection = event->disconnect.conn;
+    if (client && client->getConnId() == connection.conn_handle) {
+        ESP_LOGW("BleClientTransport", "Disconnect rc=%d (0x%x), interval=%ums, timeout=%ums", event->disconnect.reason,
+                 event->disconnect.reason, connection.conn_itvl * 5 / 4, connection.supervision_timeout * 10);
+    }
+    return 0;
+}
+
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
@@ -22,6 +39,9 @@ void BleClientTransport::init(const String &deviceName) {
         return;
     }
     _client->setClientCallbacks(this);
+    const int listenerRc = ble_gap_event_listener_register(&controllerGapListener, logControllerGapEvent, this);
+    if (listenerRc != 0 && listenerRc != BLE_HS_EALREADY)
+        ESP_LOGW(LOG_TAG, "Could not register connection diagnostics: %d", listenerRc);
     scan();
 }
 

@@ -8,6 +8,7 @@
 #include "uart/UartOtaReceiver.h"
 #include "uart/UartTransport.h"
 #include <Arduino.h>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -136,6 +137,10 @@ class GaggiMateServer {
     void registerHandlers();
     void pushSystemInfo();
     void onLinkSelected(LinkType active);
+    void serviceConsole();
+    std::atomic<bool> _consoleRequested{false};
+    std::atomic<uint32_t> _consoleRenewed{0};
+    uint32_t _lastConsoleSent = 0;
 
     // Drains UART RX and drives the endpoint send pump / retransmit, independent of the slow 250ms main loop.
     TaskHandle_t _taskHandle = nullptr;
