@@ -55,6 +55,11 @@ msgstr "{0, plural, other {# プロファイル}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, other {# ショット}}"
 
+#. placeholder {0}: entry.lost
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "{0} log records dropped before this entry."
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 件の候補}}"
@@ -281,6 +286,10 @@ msgstr "利用可能なメトリクスはすべて表示されています。"
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available panels are visible."
 msgstr "利用可能なパネルはすべて表示されています。"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "All levels"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -565,6 +574,10 @@ msgstr "ボイラー {temperature} °C"
 msgid "Boiler Refill Plugin"
 msgstr "ボイラー給水プラグイン"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Both devices"
+msgstr ""
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
@@ -747,6 +760,10 @@ msgstr "ハードウェアスケールと Bluetooth スケールの両方が利�
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Cleaning & Maintenance"
 msgstr "クリーニングとメンテナンス"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Clear"
+msgstr ""
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Clear date filter"
@@ -971,6 +988,14 @@ msgstr "接続中…"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Control Column Style"
 msgstr "コントロール列のスタイル"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Controller"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Controller disconnected"
+msgstr ""
 
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
@@ -1283,6 +1308,10 @@ msgstr "説明"
 msgid "Deselect {itemName}"
 msgstr "{itemName} の選択を解除"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Device console"
+msgstr ""
+
 #: src/components/Navigation.jsx
 #: src/pages/Settings/index.jsx
 msgid "Device Settings"
@@ -1306,11 +1335,19 @@ msgstr "破棄"
 msgid "Disconnect"
 msgstr "切断"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Disconnected"
+msgstr ""
+
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Dismiss"
 msgstr "閉じる"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Display"
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Display Settings"
@@ -1367,6 +1404,10 @@ msgstr "抽出量"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Dose Out (g)"
 msgstr "抽出量 (g)"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Download logs"
+msgstr ""
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Download Support Data"
@@ -1533,6 +1574,10 @@ msgstr "スマートグラインドを有効にする"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Enable standby display"
 msgstr "スタンバイ画面を有効にする"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Enable streaming to view device logs."
+msgstr ""
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Enables compact mode for this panel"
@@ -2280,6 +2325,10 @@ msgstr "先週"
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "前回: {lastTime} · {shotsSince, plural, other {以降 # ショット}}"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Latest 1,000 entries. Times are uptime on each device. Pause scrolling keeps streaming active."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
 msgstr "長さ（長い順）"
@@ -2321,6 +2370,10 @@ msgstr "液体抵抗 (bar·s/mL)"
 #: src/app/machines.js
 msgid "live connection failed ({reason})"
 msgstr "ライブ接続に失敗しました（{reason}）"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Live Console"
+msgstr ""
 
 #: src/components/OverviewChart.jsx
 msgid "Live Metrics"
@@ -2377,6 +2430,14 @@ msgstr "ローカルブラウザーストレージ (WEB)"
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
 msgstr "ローカルブラウザーの時刻を使用します。"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Log level"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Log source"
+msgstr ""
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Longest Duration"
@@ -3042,6 +3103,14 @@ msgstr "一時停止"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Pause replay"
 msgstr "リプレイを一時停止"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Pause scrolling"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Paused while tab is hidden"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
@@ -3836,6 +3905,10 @@ msgstr "以前のプロファイルを復元中..."
 msgid "Resume replay"
 msgstr "リプレイを再開"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Resume scrolling"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Retry"
@@ -4398,6 +4471,10 @@ msgstr "コントロール列のパネルを個別のカードとして表示す
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "抽出中にスケールの接続が一時的に途切れたときに表示されます。この場合、後でスケールが再接続しても、その抽出では停止判定に重量が使われません。"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Shows logs from both devices. Streaming stops when you leave this screen or hide this tab."
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
 msgstr "滴下や制御の遅延を考慮して、流量に基づき早めにプロセスを停止します。"
@@ -4669,6 +4746,10 @@ msgstr "リプレイを停止してチャートを復元"
 msgid "Stop when"
 msgstr "停止条件"
 
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Stopped"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Stopped: Manually"
 msgstr "停止: 手動"
@@ -4696,6 +4777,14 @@ msgstr "ストレージとメモリ"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
 msgstr "インポートした外部のショットとプロファイルを、このデバイスのこのブラウザーにローカル保存します。他のブラウザーや他のデバイスでは自動的には利用できません。"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Stream device logs"
+msgstr ""
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Streaming"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -5544,6 +5633,10 @@ msgstr "水"
 msgctxt "weekday initial: Wednesday"
 msgid "W"
 msgstr "水"
+
+#: src/pages/Settings/tabs/ConsoleSection.jsx
+msgid "Waiting for device logs…"
+msgstr ""
 
 #: src/utils/warnings.js
 msgctxt "warning level"

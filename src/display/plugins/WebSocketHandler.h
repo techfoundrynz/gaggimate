@@ -2,10 +2,12 @@
 #define WEBSOCKETHANDLER_H
 
 #include <ArduinoJson.h>
+#include <ConsoleObservers.h>
 #include <ESPAsyncWebServer.h>
 #include <display/util/PsramAllocator.h>
 #include <functional>
 #include <map>
+#include <mutex>
 
 constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t STATE_RESEND_PERIOD = 10000; // full slow-state resend even without changes
@@ -51,6 +53,7 @@ class WebSocketHandler {
     void handleFlushStop(uint32_t clientId, JsonDocument &request);
     void publishState(unsigned long now);
     void publishTelemetry();
+    void publishConsole(uint32_t now);
     void sendAutotuneResult();
     void sendAutotuneFailed();
 
@@ -78,6 +81,12 @@ class WebSocketHandler {
     JsonDocument statusDoc{&psramAllocator};
     // Independent 5 Hz calibration stream, without increasing general status traffic.
     JsonDocument hardwareScaleDiagnosticDoc{&psramAllocator};
+    std::mutex consoleMutex;
+    remote_console::Observers consoleObservers;
+    bool consoleForwarding = false;
+    uint32_t lastConsoleRenewed = 0;
+    uint32_t lastConsoleSent = 0;
+    uint32_t lastConsoleStatus = 0;
 };
 
 #endif // WEBSOCKETHANDLER_H

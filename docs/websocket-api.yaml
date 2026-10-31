@@ -26,6 +26,7 @@ channels:
       message:
         oneOf:
           - $ref: '#/components/messages/StatusEvent'
+          - $ref: '#/components/messages/ConsoleEvent'
           - $ref: '#/components/messages/OtaSettingsResponse'
           - $ref: '#/components/messages/OtaProgressEvent'
           - $ref: '#/components/messages/AutotuneResultEvent'
@@ -51,6 +52,7 @@ channels:
       message:
         oneOf:
           - $ref: '#/components/messages/OtaSettingsRequest'
+          - $ref: '#/components/messages/ConsoleSubscribeRequest'
           - $ref: '#/components/messages/OtaStartRequest'
           - $ref: '#/components/messages/AutotuneStartRequest'
           - $ref: '#/components/messages/ProfilesListRequest'
@@ -193,6 +195,65 @@ components:
     ProfilePayload:
       $ref: '../schema/profile.json'
   messages:
+    ConsoleSubscribeRequest:
+      name: req:console:subscribe
+      summary: Enable, renew, or stop this WebSocket client's live console subscription.
+      description: |
+        Send enabled=true on opening the console and every 5 seconds while viewed.
+        Send enabled=false when leaving or hiding it. Each client lease expires
+        after 15 seconds without renewal, and disconnect removes it immediately.
+        Only subscribers receive console events. Multiple viewers share one BLE
+        controller stream; no viewers means no console BLE or WebSocket traffic.
+        Streaming is suspended during firmware updates. No response is required.
+      payload:
+        type: object
+        required: [tp, enabled]
+        properties:
+          tp:
+            const: req:console:subscribe
+          enabled:
+            type: boolean
+    ConsoleEvent:
+      name: evt:console
+      summary: Batched live logs from the display and controller.
+      description: |
+        Batches contain up to 8 records and are sent at most every 250 ms.
+        Empty connection-status heartbeats are sent once a second while subscribed.
+        Controller diagnostics are best effort, at most 10 records per second,
+        yielding to reliable traffic. Each device has a 24-record buffer. Records
+        longer than 160 characters are truncated with an ellipsis. No historical
+        logs are captured while streaming is disabled. Serial output is preserved;
+        direct Serial.print, bootloader, and panic output are outside this stream.
+        Times are device uptime, not synchronized wall-clock timestamps. Sequence
+        gaps reveal lost packets; dropped reports losses known to the sender.
+        The optional BLE messages preserve protocol version 8 compatibility;
+        both firmware targets need updating to obtain controller logs.
+      payload:
+        type: object
+        required: [tp, controllerConnected, entries]
+        properties:
+          tp:
+            const: evt:console
+          controllerConnected:
+            type: boolean
+          entries:
+            type: array
+            maxItems: 8
+            items:
+              type: object
+              required: [source, timestamp, sequence, dropped, text]
+              properties:
+                source:
+                  enum: [display, controller]
+                timestamp:
+                  type: integer
+                  description: Milliseconds since this device booted.
+                sequence:
+                  type: integer
+                dropped:
+                  type: integer
+                text:
+                  type: string
     StatusEvent:
       payload:
         $ref: '#/components/schemas/StatusPayload'

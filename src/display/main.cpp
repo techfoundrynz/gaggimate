@@ -1,4 +1,5 @@
 #include "main.h"
+#include <RemoteConsole.h>
 
 #ifndef GAGGIMATE_HEADLESS
 #include <lvgl.h>
@@ -8,6 +9,7 @@ Controller controller;
 
 void setup() {
     Serial.begin(115200);
+    remote_console::begin();
     controller.setup();
 }
 

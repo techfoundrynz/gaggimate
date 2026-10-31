@@ -299,6 +299,12 @@ void AsyncWebServer::begin() {
     if (_listenFd >= 0)
         return;
     uint16_t port = _port < 1024 ? 8080 : _port; // avoid needing root for :80
+    if (const char *configuredPort = std::getenv("GM_SIM_WEB_PORT")) {
+        char *end = nullptr;
+        const long value = std::strtol(configuredPort, &end, 10);
+        if (end != configuredPort && *end == '\0' && value >= 1024 && value <= 65535)
+            port = static_cast<uint16_t>(value);
+    }
     _listenFd = socket(AF_INET, SOCK_STREAM, 0);
     int yes = 1;
     setsockopt(_listenFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));

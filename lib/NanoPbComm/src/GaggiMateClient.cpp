@@ -1,9 +1,26 @@
 #include "GaggiMateClient.h"
+#include <RemoteConsole.h>
 #include <esp_log.h>
 
 GaggiMateClient::GaggiMateClient() : _endpoint(_transport) {}
 
+void GaggiMateClient::sendConsoleSubscription(bool enabled) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_console_subscription_tag;
+    p.content.console_subscription.enabled = enabled;
+    _endpoint.send(p, gm_proto::PRIO_LOW);
+}
+
 void GaggiMateClient::init(const String &deviceName) {
+    _endpoint.on(gaggimate_Payload_console_record_tag, [](const gm::Payload &p) {
+        remote_console::Record record;
+        record.controller = true;
+        record.timestamp = p.content.console_record.timestamp;
+        record.sequence = p.content.console_record.sequence;
+        record.dropped = p.content.console_record.dropped;
+        strlcpy(record.text, p.content.console_record.text, sizeof(record.text));
+        remote_console::pushRemote(record);
+    });
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
         if (_connCb)

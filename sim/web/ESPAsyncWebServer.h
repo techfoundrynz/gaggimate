@@ -114,6 +114,7 @@ class AsyncWebSocketClient {
     uint32_t id() const { return _id; }
     int fd() const { return _fd; }
     void setCloseClientOnQueueFull(bool) {}
+    size_t queueLen() const { return 0; }
     void text(AsyncWebSocketSharedBuffer buffer);
     void text(const String &message);
 
@@ -134,6 +135,13 @@ class AsyncWebSocket {
     void text(uint32_t id, AsyncWebSocketSharedBuffer buffer);
     void textAll(AsyncWebSocketSharedBuffer buffer);
     void cleanupClients() {}
+    AsyncWebSocketClient *client(uint32_t id) {
+        for (auto *client : _clients)
+            if (client->id() == id)
+                return client;
+        return nullptr;
+    }
+    bool availableForWrite(uint32_t id) { return client(id) != nullptr; }
     void closeAll();
     const std::vector<AsyncWebSocketClient *> &getClients() const { return _clients; }
 

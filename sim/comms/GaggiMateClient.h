@@ -80,6 +80,7 @@ class GaggiMateClient {
     uint32_t getRetransmits() const { return 0; }
     bool isIdle() const { return true; }
     void setLowLatency(bool) {}
+    void sendConsoleSubscription(bool enabled);
     NimBLEClient *getClient() const { return const_cast<NimBLEClient *>(&_nativeClient); }
 
     // build*: compose a command without sending.
@@ -140,6 +141,11 @@ class GaggiMateClient {
     bool _pendingConnect = false;
     bool _autotunePending = false;
     uint32_t _autotuneDueMs = 0;
+    bool _consoleStreaming = false;
+    uint32_t _consoleRenewed = 0;
+    uint32_t _lastConsoleLog = 0;
+    uint32_t _consoleSequence = 0;
+    void emitConsoleLog(const char *text);
 
     ConnectionCallback _connCb;
     IncompatibleCallback _incompatibleCb;

@@ -1,8 +1,36 @@
 #include "GaggiMateClient.h"
+#include <RemoteConsole.h>
+
+void GaggiMateClient::sendConsoleSubscription(bool enabled) {
+    const bool starting = enabled && !_consoleStreaming;
+    _consoleStreaming = enabled;
+    _consoleRenewed = millis();
+    if (starting) {
+        ESP_LOGI("Console", "Console observer subscribed to simulated controller");
+        emitConsoleLog("[I] Simulated controller log streaming enabled");
+    }
+}
+
+void GaggiMateClient::emitConsoleLog(const char *text) {
+    if (!_connected || !_consoleStreaming || !remote_console::leaseActive(millis(), _consoleRenewed))
+        return;
+    remote_console::Record record;
+    record.controller = true;
+    record.timestamp = millis();
+    record.sequence = ++_consoleSequence;
+    snprintf(record.text, sizeof(record.text), "%s", text);
+    remote_console::pushRemote(record);
+}
 
 GaggiMateClient::GaggiMateClient() {
     // Forward the mock's telemetry to whatever the firmware registered.
     _mock.onSensor = [this](float t, float t2, float p, float pf, float mf, float pr, float pp, float hp, float wp) {
+        if (uint32_t(millis() - _lastConsoleLog) >= 1000) {
+            _lastConsoleLog = millis();
+            char text[remote_console::TEXT_SIZE];
+            snprintf(text, sizeof(text), "[I] Simulated controller: temperature=%.1f C pressure=%.2f bar", t, p);
+            emitConsoleLog(text);
+        }
         if (_sensorCb)
             _sensorCb(t, t2, p, pf, mf, pr, pp, hp, wp);
     };

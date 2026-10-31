@@ -1,4 +1,5 @@
 #include "GaggiMateServer.h"
+#include <RemoteConsole.h>
 #include <cstdio>
 #include <cstring>
 #include <esp_log.h>
@@ -9,7 +10,13 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
                            const gm::DeviceCapabilities &capabilities, bool pairingWindow) {
     setSystemInfo(hardware, version, capabilities);
     registerHandlers();
+    _endpoint.on(gaggimate_Payload_console_subscription_tag, [this](const gm::Payload &p) {
+        _consoleRenewed.store(millis());
+        _consoleRequested.store(p.content.console_subscription.enabled);
+    });
     _endpoint.onConnection([this](bool connected) {
+        _consoleRequested.store(false);
+        remote_console::setEnabled(false);
         _sentSystemInfoAfterHandshake = false;
         if (connected)
             pushSystemInfo();
@@ -30,7 +37,31 @@ void GaggiMateServer::pumpTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();
     for (;;) {
         self->_endpoint.loop();
+        self->serviceConsole();
         xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(15));
+    }
+}
+
+void GaggiMateServer::serviceConsole() {
+    const uint32_t now = millis();
+    const bool active =
+        _consoleRequested.load() && remote_console::leaseActive(now, _consoleRenewed.load()) && isConnected() && !isUpdating();
+    remote_console::setEnabled(active);
+    if (!active || uint32_t(now - _lastConsoleSent) < 100)
+        return;
+    _lastConsoleSent = now; // At most ten log datagrams/sec; never retransmit diagnostics.
+    remote_console::Record record;
+    if (!remote_console::pop(record))
+        return;
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_console_record_tag;
+    p.content.console_record.timestamp = record.timestamp;
+    p.content.console_record.sequence = record.sequence;
+    p.content.console_record.dropped = record.dropped;
+    strlcpy(p.content.console_record.text, record.text, sizeof(p.content.console_record.text));
+    if (!_endpoint.trySendDiagnostic(p)) {
+        // Carry losses forward even if the dropped record already reported an overflow.
+        remote_console::noteDropped(record.dropped + 1);
     }
 }
 

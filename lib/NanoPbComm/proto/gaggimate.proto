@@ -46,6 +46,7 @@ message Payload {
         LedControl led = 11;
         ScaleFactors scale_factors = 12;
         HeaterSettings heater = 13;
+        ConsoleSubscription console_subscription = 14;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -56,6 +57,7 @@ message Payload {
         TofMeasurement tof = 25;
         Error error = 26;
         ScaleMeasurement scale = 27;
+        ConsoleRecord console_record = 28;
     }
 }
 
@@ -64,6 +66,19 @@ message Payload {
 // ---------------------------------------------------------------------------
 
 message Ping {}
+
+// Renewable observer lease. No console data is sent without an active viewer.
+message ConsoleSubscription {
+    bool enabled = 1;
+}
+
+// Best-effort diagnostics, never coalesced or retransmitted. Fits one BLE datagram.
+message ConsoleRecord {
+    uint32 timestamp = 1;
+    uint32 sequence = 2;
+    uint32 dropped = 3;
+    string text = 4;
+}
 
 enum BoilerMode {
     BOILER_MODE_TEMPERATURE = 0; // `setpoint` is a target temperature in degC

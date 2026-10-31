@@ -1,4 +1,5 @@
 #include "WebSocketHandler.h"
+#include <RemoteConsole.h>
 #include <algorithm>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
@@ -152,6 +153,10 @@ void WebSocketHandler::attach(AsyncWebServer &server) {
                     client->text(lastStateBuffer);
                 ESP_LOGI("WebSocketHandler", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
+                {
+                    std::lock_guard<std::mutex> lock(consoleMutex);
+                    consoleObservers.subscribe(client->id(), false, millis());
+                }
                 ESP_LOGI("WebSocketHandler", "WebSocket client disconnected (%d open connections)", server->getClients().size());
                 rxBuffers.erase(client->id());
             } else if (type == WS_EVT_DATA) {
@@ -162,6 +167,7 @@ void WebSocketHandler::attach(AsyncWebServer &server) {
 }
 
 void WebSocketHandler::loop(unsigned long now) {
+    publishConsole(now);
     if (now - lastHardwareScaleDiagnostic >= 200 && hasClients() && controller->getSystemInfo().capabilities.hwScale) {
         lastHardwareScaleDiagnostic = now;
         hardwareScaleDiagnosticDoc.clear();
@@ -217,6 +223,11 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     resp["rid"] = doc["rid"].as<String>();
                     resp["error"] = F("Update in progress");
                     client->text(toWsBuffer(resp));
+                } else if (msgType == "req:console:subscribe") {
+                    if (doc["enabled"].is<bool>()) {
+                        std::lock_guard<std::mutex> lock(consoleMutex);
+                        consoleObservers.subscribe(cid, doc["enabled"].as<bool>(), millis());
+                    }
                 } else if (msgType.startsWith("req:profiles:")) {
                     handleProfileRequest(client->id(), doc);
                 } else if (msgType == "req:ota-settings") {
@@ -297,6 +308,52 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
         }
         // Done with this message
         rxBuffers.erase(cid);
+    }
+}
+
+void WebSocketHandler::publishConsole(uint32_t now) {
+    std::vector<uint32_t> viewers;
+    {
+        std::lock_guard<std::mutex> lock(consoleMutex);
+        viewers = consoleObservers.viewers(now);
+    }
+    const bool active = !viewers.empty() && !controller->isUpdating();
+    remote_console::setEnabled(active);
+    auto *client = controller->getClientController();
+    if (client->isConnected()) {
+        if (active != consoleForwarding || (active && uint32_t(now - lastConsoleRenewed) >= remote_console::RENEW_MS)) {
+            client->sendConsoleSubscription(active);
+            lastConsoleRenewed = now;
+        }
+        consoleForwarding = active;
+    } else {
+        consoleForwarding = false; // Re-subscribe immediately after BLE reconnects.
+    }
+    if (!active || uint32_t(now - lastConsoleSent) < 250)
+        return;
+    lastConsoleSent = now;
+    JsonDocument doc(&psramAllocator);
+    doc["tp"] = "evt:console";
+    doc["controllerConnected"] = client->isConnected();
+    auto entries = doc["entries"].to<JsonArray>();
+    remote_console::Record record;
+    for (size_t i = 0; i < 8 && remote_console::pop(record); ++i) {
+        auto entry = entries.add<JsonObject>();
+        entry["source"] = record.controller ? "controller" : "display";
+        entry["timestamp"] = record.timestamp;
+        entry["sequence"] = record.sequence;
+        entry["dropped"] = record.dropped;
+        entry["text"] = record.text;
+    }
+    // One shared buffer per batch; only observers receive it. Status-only frames run at 1 Hz.
+    if (entries.size() == 0 && uint32_t(now - lastConsoleStatus) < 1000)
+        return;
+    lastConsoleStatus = now;
+    auto message = toWsBuffer(doc);
+    for (uint32_t id : viewers) {
+        auto *viewer = ws.client(id);
+        if (viewer && viewer->queueLen() < 2 && ws.availableForWrite(id))
+            ws.text(id, message);
     }
 }
 

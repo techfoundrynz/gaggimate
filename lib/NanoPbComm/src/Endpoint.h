@@ -72,6 +72,9 @@ class Endpoint {
     void sendUnreliable(const gm::Payload &payload);
     void sendUnreliable(const gm::Payload *payloads, size_t count);
 
+    // Best-effort diagnostics yield to queued/in-flight reliable traffic and never wait for the endpoint lock.
+    bool trySendDiagnostic(const gm::Payload &payload);
+
     // Register a handler for a oneof tag (e.g. Payload_sensor_tag). Replaces any
     // previously registered handler for that tag.
     void on(pb_size_t which, Handler handler);

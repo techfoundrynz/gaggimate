@@ -8,6 +8,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import { ConsoleSection } from './ConsoleSection.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -185,7 +186,7 @@ function MaintenanceSection({
           )}
           {rebuilt && (
             <span className='text-success ml-2'>
-              <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
+              <FontAwesomeIcon icon={faCheck} />
             </span>
           )}
         </button>
@@ -456,6 +457,8 @@ export function SystemTab() {
       </Section>
 
       <StorageAndMemorySection formData={formData} />
+
+      <ConsoleSection />
 
       <MaintenanceSection
         downloadSupportData={downloadSupportData}

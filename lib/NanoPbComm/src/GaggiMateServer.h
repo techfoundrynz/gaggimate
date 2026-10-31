@@ -5,6 +5,7 @@
 #include "GaggiMateComm.h"
 #include "ble/BleServerTransport.h"
 #include <Arduino.h>
+#include <atomic>
 #include <functional>
 
 // Controller-side protocol facade: owns transport + Endpoint, exposes semantic sends and typed command callbacks;
@@ -112,6 +113,10 @@ class GaggiMateServer {
 
     void registerHandlers();
     void pushSystemInfo();
+    void serviceConsole();
+    std::atomic<bool> _consoleRequested{false};
+    std::atomic<uint32_t> _consoleRenewed{0};
+    uint32_t _lastConsoleSent = 0;
 
     // Drives the endpoint send pump / retransmit on the NimBLE core, independent of the slow 250ms main loop.
     TaskHandle_t _taskHandle = nullptr;

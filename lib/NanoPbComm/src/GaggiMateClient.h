@@ -85,6 +85,7 @@ class GaggiMateClient {
 
     // Commands (display -> controller)
     void sendPing();
+    void sendConsoleSubscription(bool enabled);
     void sendBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     void sendRelayControl(uint8_t index, bool open); // index 0 = brew valve, 1 = alt relay
