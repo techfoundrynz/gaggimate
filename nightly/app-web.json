@@ -1,6 +1,6 @@
 {
-  "version": "v1.8.1-357-g24db8875",
+  "version": "v1.8.1-358-g91729164",
   "url": "https://github.com/techfoundrynz/gaggimate/releases/download/nightly/app-web.zip",
-  "checksum": "9e3055e8710c601d4ceeaedbbed2ee0db62bdfda4cf7ea77962ed5e542ee269f",
+  "checksum": "915567e202b155acbaee622eda69cc6064ee3196c2f4cbcbc7374cbb6e361210",
   "minAppVersion": "1.0.0"
 }
