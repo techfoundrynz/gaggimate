@@ -106,10 +106,11 @@ void GaggiMateController::setup() {
     } else {
         pump = std::make_unique<SimplePump>(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
-    brewBtn =
-        std::make_unique<DigitalInput>(_config.brewButtonPin, [this](const bool state) { _comms.sendButtonState(0, state); });
-    steamBtn =
-        std::make_unique<DigitalInput>(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
+    constexpr DigitalInput::Timing buttonTiming{10, 30}; // Poll every 10 ms; require 30 ms stable on both edges.
+    brewBtn = std::make_unique<DigitalInput>(
+        _config.brewButtonPin, [this](const bool state) { _comms.sendButtonState(0, state); }, buttonTiming);
+    steamBtn = std::make_unique<DigitalInput>(
+        _config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); }, buttonTiming);
     if (_config.waterButtonPin != 0) {
         waterBtn = std::make_unique<DigitalInput>(_config.waterButtonPin,
                                                   [this](const bool state) { _comms.sendButtonState(2, state); });
